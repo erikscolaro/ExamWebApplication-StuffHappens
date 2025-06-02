@@ -1,0 +1,41 @@
+class ErrorDTO extends Error{
+  constructor(code, name, message){
+    super(message);
+    this.code = code;
+    this.name = name;
+  }
+
+  toJSON(){
+    return {
+      code: this.code,
+      name: this.name,
+      message: this.message
+    };
+  }
+
+  static badRequest(message) {
+    return new ErrorDTO(400, 'badRequest', message);
+  }
+
+  static unauthorized(message) {
+    return new ErrorDTO(401, 'unauthorized', message);
+  }
+
+  static forbidden(message) {
+    return new ErrorDTO(403, 'forbidden', message);
+  }
+
+  static notFound(message) {
+    return new ErrorDTO(404, 'notFound', message);
+  }
+
+  static conflict(message) {
+    return new ErrorDTO(409, 'conflict', message);
+  }
+
+  static internalServerError(message) {
+    return new ErrorDTO(500, 'internalServerError', message);
+  }
+}
+
+export default ErrorDTO;
