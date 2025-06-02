@@ -36,6 +36,10 @@ class ErrorDTO extends Error{
   static internalServerError(message) {
     return new ErrorDTO(500, 'internalServerError', message);
   }
+
+  static serviceUnavailable(message) {
+    return new ErrorDTO(503, 'serviceUnavailable', message);
+  }
 }
 
 export default ErrorDTO;

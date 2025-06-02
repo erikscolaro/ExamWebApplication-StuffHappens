@@ -2,13 +2,13 @@ import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import session from 'express-session';
-import passport from './config/passportConfig.mjs';
+import passport from './src/config/passportConfig.mjs';
 import authRouter from './src/routes/authRoutes.mjs';
 import gameRouter from './src/routes/gameRoutes.mjs';
 import demoRouter from './src/routes/demoRoutes.mjs';
 import errorHandler from './src/middleware/errorMiddleware.mjs';
 import isLoggedIn from './src/middleware/authMiddleware.mjs';
-import CONFIG from './src/config/config';
+import CONFIG from './src/config/config.mjs';
 import ErrorDTO from './src/models/errors.mjs';
 
 // init express
@@ -30,9 +30,9 @@ app.use(passport.session());
 app.use(passport.authenticate('session'));
 
 //ROUTES
-app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/session", authRouter);
 app.use("/api/v1/demos", demoRouter);
-app.use("/api/v1/users/:userId", isLoggedIn, gameRouter);
+app.use("/api/v1/games", isLoggedIn, gameRouter);
 app.use('/images', express.static('public/images'));
 
 // default route - catch all unmatched routes

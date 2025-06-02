@@ -1,22 +1,27 @@
 import express from 'express';
+import passport from 'passport';
+import ErrorDTO from '../models/errors.mjs';
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
-  const { username, password } = req.body;
-  
-  // need to check the db with hash password and salt
-
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
-  }
-  
-  // Add authentication logic here
-  // This is a placeholder - implement actual authentication
-  
-  res.json({ message: 'Login successful', user: { username } });
+// POST /api/sessions
+router.post('/', passport.authenticate('local'), function(req, res) {
+  return res.status(201).json(req.user);
 });
 
-// do we need to write logout ?
+// GET /api/sessions/current
+router.get('/current', (req, res) => {
+  if(req.isAuthenticated()) {
+    res.json(req.user);}
+  else
+    next(ErrorDTO.unauthorized("Not authenticated user."));
+});
+
+// DELETE /api/session/current
+router.delete('/current', (req, res) => {
+  req.logout(() => {
+    res.end();
+  });
+});
 
 export default router;

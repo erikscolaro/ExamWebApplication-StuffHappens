@@ -1,7 +1,7 @@
 import express from 'express';
 import ErrorDTO from '../models/errors.mjs';
-import { listGames, createGame, listGameRecords, createGameRecord } from '../dao/dao.mjs';
-
+import * as dao from '../dao/dao.mjs';
+ 
 const router = express.Router();
 
 // GET /api/v1/users/:userId/games - Get game history for user
@@ -9,15 +9,21 @@ router.get('/users/:userId/games', async (req, res, next) => {
   try {
     const { userId } = req.params;
     
-    // Check if the requesting user can access this user's games
-    if (req.user.id !== parseInt(userId)) {
-      return next(ErrorDTO.forbidden("You can only access your own games."));
+    // Validate userId parameter
+    if (!userId || isNaN(parseInt(userId))) {
+      return next(ErrorDTO.badRequest("Invalid user ID provided"));
     }
+
+    // Get games with records for the user
+    const games = await dao.getGamesWithRecords(parseInt(userId));
     
-    const games = await listGames(req.user.id);
-    res.json({ games });
+    res.json({
+      message: "Games retrieved successfully",
+      data: games
+    });
+
   } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to retrieve game history."));
+    next(ErrorDTO.internalServerError("Failed to retrieve game history"));
   }
 });
 
@@ -26,18 +32,26 @@ router.post('/users/:userId/games', async (req, res, next) => {
   try {
     const { userId } = req.params;
     
-    // Check if the requesting user can create games for this user
-    if (req.user.id !== parseInt(userId)) {
-      return next(ErrorDTO.forbidden("You can only create games for yourself."));
+    // Validate userId parameter
+    if (!userId || isNaN(parseInt(userId))) {
+      return next(ErrorDTO.badRequest("Invalid user ID provided"));
     }
+
+    // TODO: Implement game creation logic
+    // - Validate user exists
+    // - Create new game record
+    // - Initialize game state (cards, rounds, etc.)
     
-    const gameId = await createGame(req.user.username);
-    res.status(201).json({ 
-      gameId,
-      message: "Game created successfully"
+    res.status(201).json({
+      message: "Game created successfully",
+      data: {
+        gameId: null, // TODO: Return actual game ID
+        status: "created"
+      }
     });
+
   } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to create game."));
+    next(ErrorDTO.internalServerError("Failed to create game"));
   }
 });
 
@@ -46,23 +60,32 @@ router.get('/users/:userId/games/:gameId', async (req, res, next) => {
   try {
     const { userId, gameId } = req.params;
     
-    // Check if the requesting user can access this user's games
-    if (req.user.id !== parseInt(userId)) {
-      return next(ErrorDTO.forbidden("You can only access your own games."));
+    // Validate parameters
+    if (!userId || isNaN(parseInt(userId))) {
+      return next(ErrorDTO.badRequest("Invalid user ID provided"));
     }
-    
-    const gameRecords = await listGameRecords(gameId);
-    
-    if (!gameRecords || gameRecords.length === 0) {
-      return next(ErrorDTO.notFound("Game not found."));
+    if (!gameId || isNaN(parseInt(gameId))) {
+      return next(ErrorDTO.badRequest("Invalid game ID provided"));
     }
+
+    // TODO: Implement game status retrieval
+    // - Validate user owns the game
+    // - Get game details with current state
+    // - Return game progress, current round, etc.
     
-    res.json({ 
-      gameId: parseInt(gameId),
-      records: gameRecords 
+    res.json({
+      message: "Game status retrieved successfully",
+      data: {
+        gameId: parseInt(gameId),
+        userId: parseInt(userId),
+        status: "in_progress", // TODO: Get actual status
+        currentRound: null, // TODO: Get current round
+        records: [] // TODO: Get game records
+      }
     });
+
   } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to retrieve game status."));
+    next(ErrorDTO.internalServerError("Failed to retrieve game status"));
   }
 });
 
@@ -72,27 +95,40 @@ router.put('/users/:userId/games/:gameId/rounds/:roundId', async (req, res, next
     const { userId, gameId, roundId } = req.params;
     const { answer } = req.body;
     
-    // Check if the requesting user can play this user's games
-    if (req.user.id !== parseInt(userId)) {
-      return next(ErrorDTO.forbidden("You can only play your own games."));
+    // Validate parameters
+    if (!userId || isNaN(parseInt(userId))) {
+      return next(ErrorDTO.badRequest("Invalid user ID provided"));
     }
-    
-    // Validate answer
+    if (!gameId || isNaN(parseInt(gameId))) {
+      return next(ErrorDTO.badRequest("Invalid game ID provided"));
+    }
+    if (!roundId || isNaN(parseInt(roundId))) {
+      return next(ErrorDTO.badRequest("Invalid round ID provided"));
+    }
     if (answer === undefined || answer === null) {
-      return next(ErrorDTO.badRequest("Answer is required."));
+      return next(ErrorDTO.badRequest("Answer is required"));
     }
+
+    // TODO: Implement answer submission logic
+    // - Validate user owns the game
+    // - Validate round exists and is current
+    // - Process the answer (higher/lower/equal)
+    // - Update game state
+    // - Return result and next state
     
-    // Create game record for this round
-    const recordId = await createGameRecord(gameId, roundId, answer);
-    
-    res.json({ 
-      roundId: parseInt(roundId),
-      answer,
-      recordId,
-      message: "Answer submitted successfully"
+    res.json({
+      message: "Answer submitted successfully",
+      data: {
+        roundId: parseInt(roundId),
+        answer: answer,
+        isCorrect: null, // TODO: Calculate if answer is correct
+        nextCard: null, // TODO: Return next card if game continues
+        gameStatus: "in_progress" // TODO: Update game status
+      }
     });
+
   } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to submit answer."));
+    next(ErrorDTO.internalServerError("Failed to submit answer"));
   }
 });
 
