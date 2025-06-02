@@ -30,10 +30,23 @@ app.use(passport.session());
 app.use(passport.authenticate('session'));
 
 //ROUTES
-app.use("/api/v1/session", authRouter);
-app.use("/api/v1/demos", demoRouter);
-app.use("/api/v1/games", isLoggedIn, gameRouter);
-app.use('/images', express.static('public/images'));
+// API root endpoint
+app.get('/api/v1/', (req, res) => {
+  res.json({
+    message: "Gioco Sfortuna API v1",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/v1/sessions",
+      games: "/api/v1/users/:userId/games",
+      demos: "/api/v1/demos"
+    }
+  });
+});
+
+app.use(CONFIG.ROUTES_V1.AUTH, authRouter);
+app.use(CONFIG.ROUTES_V1.DEMO, demoRouter);
+app.use(CONFIG.ROUTES_V1.GAME, isLoggedIn, gameRouter);
+app.use(CONFIG.ROUTES_V1.IMAGES_URL, express.static(CONFIG.ROUTES_V1.IMAGES_PATH));
 
 // default route - catch all unmatched routes
 app.use('*', (req, res, next) => {

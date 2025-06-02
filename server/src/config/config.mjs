@@ -1,40 +1,29 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const imageUrl = "images/"
-
-const APP_V1_BASE_URL ="api/v1"
-const AUTH = "/auth";
-const USER = "/user";
-const DEMO = "/demo";
-const GAME = "/game";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const APP_V1_BASE_URL ="/api/v1"
 
 const CONFIG = {
-  DB_NAME: "nomedatabase.sqlite", 
-  CARDS_NUMBER: 50,
+  DB_NAME: path.join(__dirname, '../../data/database.sqlite'),
   APP_PORT: 3001,
   APP_HOST: "localhost",
   ROUTES_V1: {
-    AUTH: {
-      LOGIN: APP_V1_BASE_URL+"/auth", // POST con username e password
-    },
-    DEMO:{
-      CREATE: APP_V1_BASE_URL + "/demos", // POST per creare una partita demo
-      STATUS: APP_V1_BASE_URL + "/demos/:demoId", // GET per stato partita demo
-      ANSWER: APP_V1_BASE_URL + "/demos/:demoId/rounds/:roundId", // PUT per inviare risposta
-    },
-    GAME: {
-      HISTORY: APP_V1_BASE_URL + "/users/:userId/games", // GET per storico partite
-      CREATE: APP_V1_BASE_URL + "/users/:userId/games", // POST per creare una partita
-      STATUS: APP_V1_BASE_URL + "/users/:userId/games/:gameId", // GET per stato partita
-      ANSWER: APP_V1_BASE_URL + "/users/:userId/games/:gameId/rounds/:roundId", // PUT per inviare risposta
-    }
+    AUTH: APP_V1_BASE_URL + "/sessions",
+    DEMO: APP_V1_BASE_URL + "/demos",
+    GAME: APP_V1_BASE_URL + "/users/:userId/games",
+    IMAGES_PATH: "/public/images",
+    IMAGES_URL: "/images"
+  },  CORS_OPTIONS: {
+    origin: ["http://localhost:5173", "http://localhost:3000"], // Allow multiple origins
+    optionsSuccessStatus: 200, // Fixed typo: was optionsSuccessState
+    credentials: true,
   },
-  CORS_OPTIONS: {
-    origin: 'http://localhost:5173',
-    optionsSuccessState: 200,
-    credentials: true
-  },
-  MORGAN_LOG_LEVEL: "dev"
-
+  MORGAN_LOG_LEVEL: "dev",
+  CARDS_NUMBER: 50,
+  FULL_ROUNDS: 3, // Total rounds for full game
+  DEMO_ROUNDS: 1, // Total rounds for demo game
 };
 
 export default CONFIG;

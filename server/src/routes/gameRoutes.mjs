@@ -1,135 +1,119 @@
 import express from 'express';
 import ErrorDTO from '../models/errors.mjs';
+import { body } from 'express-validator';
+import {
+  handleValidationErrors,
+  validateGameCreation,
+  validateUserIdMatchesSession,
+} from "../middleware/validationMiddleware.mjs";
+import { Game, GameRecord } from '../models/game.mjs';
+import {
+  validateGameExists,
+  createNewGameWithSetup,
+  getGameStatus,
+  getUserGameHistory,
+  checkAndUpdateGameEnd,
+  getCardsForEvaluation,
+  evaluateAnswer,
+  getUpdatedGameState
+} from '../services/gameServices.mjs';
 import * as dao from '../dao/dao.mjs';
- 
+
 const router = express.Router();
 
+// =================== ROUTE HANDLERS ===================
+
 // GET /api/v1/users/:userId/games - Get game history for user
-router.get('/users/:userId/games', async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    
-    // Validate userId parameter
-    if (!userId || isNaN(parseInt(userId))) {
-      return next(ErrorDTO.badRequest("Invalid user ID provided"));
+router.get('/users/:userId/games', 
+  validateUserIdMatchesSession,
+  handleValidationErrors,  async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const games = await getUserGameHistory(userId);
+      res.status(200).json({ history: games });
+    } catch (error) {
+      next(ErrorDTO.internalServerError(error.message));
     }
-
-    // Get games with records for the user
-    const games = await dao.getGamesWithRecords(parseInt(userId));
-    
-    res.json({
-      message: "Games retrieved successfully",
-      data: games
-    });
-
-  } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to retrieve game history"));
-  }
 });
 
 // POST /api/v1/users/:userId/games - Create a new game
-router.post('/users/:userId/games', async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    
-    // Validate userId parameter
-    if (!userId || isNaN(parseInt(userId))) {
-      return next(ErrorDTO.badRequest("Invalid user ID provided"));
+router.post(
+  "/users/:userId/games",
+  validateUserIdMatchesSession,
+  validateGameCreation,
+  handleValidationErrors,
+  async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId, 10);
+      const { createdAt } = req.body;
+
+      const game = await createNewGameWithSetup(userId, createdAt);
+      res.status(201).json(game);
+    } catch (error) {
+      console.error(error);
+      next(ErrorDTO.internalServerError("Failed to create game"));
     }
-
-    // TODO: Implement game creation logic
-    // - Validate user exists
-    // - Create new game record
-    // - Initialize game state (cards, rounds, etc.)
-    
-    res.status(201).json({
-      message: "Game created successfully",
-      data: {
-        gameId: null, // TODO: Return actual game ID
-        status: "created"
-      }
-    });
-
-  } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to create game"));
   }
-});
+);
 
 // GET /api/v1/users/:userId/games/:gameId - Get specific game status
-router.get('/users/:userId/games/:gameId', async (req, res, next) => {
-  try {
-    const { userId, gameId } = req.params;
-    
-    // Validate parameters
-    if (!userId || isNaN(parseInt(userId))) {
-      return next(ErrorDTO.badRequest("Invalid user ID provided"));
-    }
-    if (!gameId || isNaN(parseInt(gameId))) {
-      return next(ErrorDTO.badRequest("Invalid game ID provided"));
-    }
-
-    // TODO: Implement game status retrieval
-    // - Validate user owns the game
-    // - Get game details with current state
-    // - Return game progress, current round, etc.
-    
-    res.json({
-      message: "Game status retrieved successfully",
-      data: {
-        gameId: parseInt(gameId),
-        userId: parseInt(userId),
-        status: "in_progress", // TODO: Get actual status
-        currentRound: null, // TODO: Get current round
-        records: [] // TODO: Get game records
-      }
-    });
-
-  } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to retrieve game status"));
-  }
-});
+router.get(
+  "/users/:userId/games/:gameId",
+  validateUserIdMatchesSession,
+  handleValidationErrors,  async (req, res, next) => {
+    try {
+      const { gameId } = req.params;
+      const game = await getGameStatus(gameId);
+      res.status(200).json(game);
+    } catch (error) {
+      next(ErrorDTO.internalServerError("Failed to retrieve game status"));
+    }  }
+);
 
 // PUT /api/v1/users/:userId/games/:gameId/rounds/:roundId - Submit answer for a round
-router.put('/users/:userId/games/:gameId/rounds/:roundId', async (req, res, next) => {
-  try {
-    const { userId, gameId, roundId } = req.params;
-    const { answer } = req.body;
-    
-    // Validate parameters
-    if (!userId || isNaN(parseInt(userId))) {
-      return next(ErrorDTO.badRequest("Invalid user ID provided"));
-    }
-    if (!gameId || isNaN(parseInt(gameId))) {
-      return next(ErrorDTO.badRequest("Invalid game ID provided"));
-    }
-    if (!roundId || isNaN(parseInt(roundId))) {
-      return next(ErrorDTO.badRequest("Invalid round ID provided"));
-    }
-    if (answer === undefined || answer === null) {
-      return next(ErrorDTO.badRequest("Answer is required"));
-    }
+router.put(
+  "/users/:userId/games/:gameId/rounds/:roundId",
+  validateUserIdMatchesSession,
+  handleValidationErrors,
+  async (req, res, next) => {
+    try {
+      const { gameId, roundId } = req.params;
+      const { answer } = req.body.cardsIds;
 
-    // TODO: Implement answer submission logic
-    // - Validate user owns the game
-    // - Validate round exists and is current
-    // - Process the answer (higher/lower/equal)
-    // - Update game state
-    // - Return result and next state
-    
-    res.json({
-      message: "Answer submitted successfully",
-      data: {
-        roundId: parseInt(roundId),
-        answer: answer,
-        isCorrect: null, // TODO: Calculate if answer is correct
-        nextCard: null, // TODO: Return next card if game continues
-        gameStatus: "in_progress" // TODO: Update game status
+      // 1. Validate game exists
+      let game = await validateGameExists(gameId);
+      
+      // 2. Check if game should end and update if needed
+      game = await checkAndUpdateGameEnd(game);
+      
+      // 3. Get correct card order for evaluation
+      const correctOrder = await getCardsForEvaluation(gameId, game.roundNum);
+      
+      // 4. Evaluate user's answer
+      const evaluation = await evaluateAnswer(gameId, roundId, answer, correctOrder);
+      
+      // 5. Advance to next round
+      await dao.updateGame(game.id, game.roundNum + 1, game.isEnded);
+      
+      // 6. Get updated game state for response
+      const updatedGame = await getUpdatedGameState(gameId);
+      
+      // 7. Send response
+      res.status(200).json({
+        message: "Answer submitted successfully",
+        game: updatedGame,
+        evaluation: evaluation,
+        isGameEnded: updatedGame.isEnded
+      });
+
+    } catch (error) {
+      if (error instanceof ErrorDTO) {
+        next(error);
+      } else {
+        next(ErrorDTO.internalServerError("Failed to submit answer"));
       }
-    });
-
-  } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to submit answer"));
+    }
   }
-});
+);
 
 export default router;

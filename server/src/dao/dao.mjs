@@ -13,15 +13,20 @@ const db = new sqlite.Database(CONFIG.DB_NAME, (err) => {
 // USER QUERY
 export const getUserByUsername = (username, password) => {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM USER WHERE USERNAME = ?";
+    const query = "SELECT * FROM USERS WHERE USERNAME = ?";
     db.get(query, [username], (err, row) => {
       if (err) reject(err);
       else if (row === undefined) resolve(false); // for passport authentication
-      else {
-        const user = new User(row.ID, row.USERNAME, row.HASHEDPASSWORD, row.SALT);
+      else {        const user = new User(row.ID, row.USERNAME, row.HASHEDPASSWORD, row.SALT);
         crypto.scrypt(password, row.SALT, 16, function(err, hashedPassword) {
           if (err) reject(err);
-          if (!crypto.timingSafeEqual(Buffer.from(row.password, 'hex'), hashedPassword)) resolve(false);
+          
+          console.log('DB Hash length:', row.HASHEDPASSWORD.length);
+          console.log('DB Hash:', row.HASHEDPASSWORD);
+          console.log('Calculated Hash length:', hashedPassword.toString('hex').length);
+          console.log('Calculated Hash:', hashedPassword.toString('hex'));
+          
+          if (!crypto.timingSafeEqual(Buffer.from(row.HASHEDPASSWORD, 'hex'), hashedPassword)) resolve(false);
           else resolve(user);
         });
       }
@@ -34,12 +39,12 @@ export const getUserByUsername = (username, password) => {
 //return the past games that are ended (not the partial ones)
 export const getGamesByUser = (userid) => {
   return new Promise((resolve, reject)=> {
-    const query = "SELECT * FROM GAME WHERE USERID = ? AND ISFINISHED = 1";
+    const query = "SELECT * FROM GAMES WHERE USERID = ? AND ISENDED = 1 ORDER BY CREATEDAT DESC";
     db.all(query, [userid], (err, rows) => {
       if (err) reject(err); // error management done outside
       else {
         // Convert rows to GameDB objects
-        const games = rows.map(row => new Game(row.ID, row.USERID, row.CREATEDAT, row.ISENDED, row.ISDEMO));
+        const games = rows.map(row => new Game(row.ID, row.USERID, row.CREATEDAT, row.ROUND, row.ISENDED, row.ISDEMO));
         resolve(games);
       }
     });
@@ -50,7 +55,7 @@ export const createGame = (userId, createdAt, isDemo) => {
   return new Promise((resolve, reject)=> {
     const query = "INSERT INTO GAMES (USERID, CREATEDAT, ROUND, ISENDED, ISDEMO) VALUES (?, ?, ?, ?, ?)";
     const userIdValue = isDemo ? null : userId;
-    db.run(query, [userIdValue, createdAt, 0, 0, isDemo?1:0], function(err) {
+    db.run(query, [userIdValue, createdAt, 1, 0, isDemo?1:0], function(err) {
       if (err) reject(err); // error management done outside
       else {
         resolve(this.lastID);
@@ -71,6 +76,19 @@ export const updateGame = (gameId, roundNum, isEnded) => {
   });
 };
 
+export const getGameById = (gameId) => {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT * FROM GAMES WHERE ID = ?";
+    db.get(query, [gameId], (err, row) => {
+      if (err) reject(err);
+      else if (row === undefined) resolve(false);
+      else {
+        const game = new Game(row.ID, row.USERID, row.ROUND, row.CREATEDAT, row.ISENDED, row.ISDEMO);
+        resolve(game);
+      }
+    });
+  });
+};
 
 // CARDS QUERY
 export const getCards = () => {
@@ -120,22 +138,26 @@ export const getGameRecordsByGameId = (gameId) => {
   });
 };
 
-export const createGameRecord = (gameId, cardId, round=0, wasGuessed=null) => {
+export const createGameRecord = (gameId, cardId, round=0, wasGuessed=null, wasConsidered=null) => {
   return new Promise((resolve, reject)=> {
-    const query = "INSERT INTO GAME_RECORDS (GAMEID, CARDID, ROUND, WASGUESSED) VALUES (?, ?, ?, ?)";
-    db.run(query, [gameId, cardId, round, wasGuessed], function(err) {
-      if (err) reject(err); // error management done outside
-      else {
-        resolve(this.lastID);
+    const query = "INSERT INTO GAME_RECORDS (GAMEID, CARDID, ROUND, WASGUESSED, WASCONSIDERED) VALUES (?, ?, ?, ?, ?)";
+    db.run(
+      query,
+      [gameId, cardId, round, wasGuessed, wasConsidered],
+      function (err) {
+        if (err) reject(err); // error management done outside
+        else {
+          resolve(this.lastID);
+        }
       }
-    });
+    );
   });
 };
 
-export const updateGameRecord = (gameId, cardId, round=0, wasGuessed=null) => {
+export const updateGameRecord = (gameId, round, wasGuessed, wasConsidered) => {
   return new Promise((resolve, reject)=> {
-    const query = "UPDATE GAME_RECORDS SET WASGUESSED = ? WHERE GAMEID = ? AND CARDID = ? AND ROUND = ?";
-    db.run(query, [wasGuessed, gameId, cardId, round], function(err) {
+    const query = "UPDATE GAME_RECORDS SET WASGUESSED = ?, WASCONSDIERED= ? WHERE GAMEID = ? AND ROUND = ?";
+    db.run(query, [wasGuessed?1:0, wasConsidered?1:0, gameId, round], function(err) {
       if (err) reject(err);
       else {
         resolve(this.changes);
@@ -145,55 +167,38 @@ export const updateGameRecord = (gameId, cardId, round=0, wasGuessed=null) => {
 }
 
 // Get games with their complete records (composite query)
-export const getGamesWithRecords = (userid) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // First get all games for user
-      const gamesQuery = "SELECT * FROM GAMES WHERE USERID = ? AND ISENDED = 1";
-      
-      db.all(gamesQuery, [userid], async (err, gameRows) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        
-        // For each game, get its records
-        const gamesWithRecords = await Promise.all(
-          gameRows.map(async (gameRow) => {
-            const recordsQuery = "SELECT * FROM GAME_RECORDS WHERE GAMEID = ?";
-            
-            return new Promise((resolveGame, rejectGame) => {
-              db.all(recordsQuery, [gameRow.ID], (err, recordRows) => {
-                if (err) {
-                  rejectGame(err);
-                  return;
-                }
-                
-                // Convert record rows to GameRecord objects
-                const records = recordRows.map(row => 
-                  new GameRecord(row.ID, row.GAMEID, row.CARDID, row.ROUND, row.WASGUESSED)
-                );
-                
-                // Create GameDB with records
-                const game = new Game(
-                  gameRow.ID, 
-                  gameRow.USERID, 
-                  gameRow.CREATEDAT, 
-                  gameRow.ISENDED, 
-                  gameRow.ISDEMO,
-                  records // Include the records array
-                );
-                
-                resolveGame(game);
-              });
-            });
-          })
+export const getGamesWithRecords = async (userid) => {
+  try {
+    const gameRows = await getGamesByUser(userid);
+    const cards = await getCards();
+
+    const gamesWithRecords = await Promise.all(
+      gameRows.map(async (gameRow) => {
+        const recordRows = await getGameRecordsByGameId(gameRow.ID);
+        const records = recordRows.map(
+          (row) =>
+            new GameRecord(
+              row.ID,
+              row.GAMEID,
+              cards.find((card) => card.ID === row.CARDID),
+              row.ROUND,
+              row.WASGUESSED
+            )
         );
-        
-        resolve(gamesWithRecords);
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
+
+        return new Game(
+          gameRow.ID,
+          gameRow.USERID,
+          gameRow.CREATEDAT,
+          gameRow.ISENDED,
+          gameRow.ISDEMO,
+          records
+        );
+      })
+    );
+
+    return gamesWithRecords;
+  } catch (error) {
+    throw error;
+  }
 };

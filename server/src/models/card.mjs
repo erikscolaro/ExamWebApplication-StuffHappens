@@ -14,16 +14,4 @@ export class CardWrapper {
     this.isGuessed = undefined;
     this.round = undefined;
   }
-
-  setGuessed(value){
-    this.isGuessed = value;
-  }
-
-  setDrawn(){
-    this.isDrawn = true;
-  }
-
-  setRound(value){
-    this.round = value;
-  }
 }
