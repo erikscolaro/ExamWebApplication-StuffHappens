@@ -9,11 +9,11 @@ passport.use(new LocalStrategy(async function verify(username, password, cb) {
   return cb(null, user);
 }));
 
-passport.serializeUser(function (user, cb) {
-  cb(null, user);
+passport.serializeUser((user, cb) => {
+  cb(null, {id: user.id, username: user.username});
 });
 
-passport.deserializeUser(function (user, cb) {
+passport.deserializeUser((user, cb) => {
   return cb(null, user);
 });
 

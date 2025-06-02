@@ -4,23 +4,34 @@ import ErrorDTO from '../models/errors.mjs';
 
 const router = express.Router();
 
-// POST /api/sessions
+// POST /api/v1/auth/login
 router.post('/', passport.authenticate('local'), function(req, res) {
   return res.status(201).json(req.user);
 });
 
-// GET /api/sessions/current
-router.get('/current', (req, res) => {
-  if(req.isAuthenticated()) {
-    res.json(req.user);}
-  else
+// GET /api/v1/auth/current - Get current user session
+router.get('/current', (req, res, next) => {  if(req.isAuthenticated()) {
+    res.json({
+      authenticated: true,
+      user: {
+        id: req.user.id,
+        username: req.user.username
+      }
+    });
+  } else {
     next(ErrorDTO.unauthorized("Not authenticated user."));
+  }
 });
 
-// DELETE /api/session/current
-router.delete('/current', (req, res) => {
-  req.logout(() => {
-    res.end();
+// POST /api/v1/auth/logout - Logout user
+router.delete('/current', (req, res, next) => {
+  req.logout((err) => {
+    if (err) {
+      return next(ErrorDTO.internalServerError("Logout error"));
+    }
+    res.json({
+      message: "Logout successful"
+    });
   });
 });
 
