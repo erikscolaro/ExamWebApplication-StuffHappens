@@ -10,6 +10,7 @@ import errorHandler from './src/middleware/errorMiddleware.mjs';
 import isLoggedIn from './src/middleware/authMiddleware.mjs';
 import CONFIG from './src/config/config.mjs';
 import ErrorDTO from './src/models/errors.mjs';
+import { validateUserIdMatchesSession } from './src/middleware/validationMiddleware.mjs';
 
 // init express
 const app = new express();
@@ -45,7 +46,7 @@ app.get('/api/v1/', (req, res) => {
 
 app.use(CONFIG.ROUTES_V1.AUTH, authRouter);
 app.use(CONFIG.ROUTES_V1.DEMO, demoRouter);
-app.use(CONFIG.ROUTES_V1.GAME, isLoggedIn, gameRouter);
+app.use(CONFIG.ROUTES_V1.GAME, isLoggedIn, validateUserIdMatchesSession, gameRouter);
 app.use(CONFIG.ROUTES_V1.IMAGES_URL, express.static(CONFIG.ROUTES_V1.IMAGES_PATH));
 
 // default route - catch all unmatched routes
