@@ -3,6 +3,7 @@ import ErrorDTO from '../models/errors.mjs';
 import * as dao from '../dao/dao.mjs';
 import CONFIG from '../config/config.mjs';
 import { Game } from '../models/game.mjs';
+import crypto from 'crypto';
 
 // =================== GAME SERVICES ===================
 
@@ -36,12 +37,14 @@ export async function createNewGameWithSetup(userId, createdAt, isDemo = false) 
   
   // 2. Generate random cards and create records
   const cardIds = generateUniqueCardIds(isDemo?4:6, CONFIG.CARDS_NUMBER);
-  
+    
   // 3. Create game records
   await Promise.all(
     cardIds.map((cardId, index) => {
       const roundNumber = index < 3 ? 0 : index - 2;
-      return dao.createGameRecord(gameId, cardId, roundNumber, roundNumber==0?true:null);
+      const wasGuessed = roundNumber === 0 ? true : null;
+      const timedOut = roundNumber === 0 ? false : null;
+      return dao.createGameRecord(gameId, cardId, roundNumber, wasGuessed, timedOut);
     })
   );
 
@@ -89,23 +92,23 @@ export async function checkAndUpdateGameEnd(game) {
  * @param {Array<number>} userAnswer - Array of card IDs in user's chosen order
  * @returns {boolean} Evaluation result with isCorrect flag and correct order
  */
-export function evaluateUserAnswer(game, userAnswer) {
-  // Filter records: wasGussedInTime !== false (strict) and round <= game.roundNum
-  const validRecords = game.records.filter(record => 
-    record.wasguessedintime !== false && record.round <= game.roundNum
+export function evaluateUserAnswer(game, userAnswer) { 
+  const validRecords = game.records.filter(
+    (record) =>
+      (record.timedOut === false && record.round <= game.roundNum)
   );
   
   // Map records to cards, sort by misery index ascending, then map to card IDs
   const correctOrderedIds = validRecords
-    .map(record => record.cardObject)
-    .sort((a, b) => a.miseryindex - b.miseryindex)
+    .map(record => record.card)
+    .sort((a, b) => a.miseryIndex - b.miseryIndex)
     .map(card => card.id);
 
   // Compare arrays
   const isCorrect =
     correctOrderedIds.length === userAnswer.length &&
     correctOrderedIds.every((id, index) => id === userAnswer[index]);
-    if (isCorrect) {
+  if (isCorrect) {
     // User answer is correct
     return {
       isCorrect: true,

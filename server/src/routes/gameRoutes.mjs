@@ -4,7 +4,6 @@ import {
   handleValidationErrors,
   validateCardIds,
   validateGameId,
-  validateUserIdMatchesSession,
 } from "../middleware/validationMiddleware.mjs";
 import {
   createNewGameWithSetup,
@@ -21,18 +20,18 @@ const router = express.Router();
 // =================== ROUTE HANDLERS ===================
 
 // GET /api/v1/users/:userId/games - Get game history for user
-// request: userId in params, no body
+// request: username in params, no body
 // response: array of games with records
 router.get(
   "/",
   handleValidationErrors,
   async (req, res, next) => {
     try {
-      const { userId } = req.params;
+      const userId = parseInt(req.user.id);
       const games = await getUserGameHistory(userId);
       res.status(200).json({ history: games });
     } catch (error) {
-      next(ErrorDTO.internalServerError(error.message));
+      next(error);
     }
   }
 );
@@ -53,7 +52,8 @@ response: the game json with first 3 cards with all details.
       "id": 1,
       "cardId": 5,
       "round": 0,
-      "wasGuessedInTime": null,
+      "wasGuessed": null,
+      "timedOut": null,
       "requestedAt": null,
       "respondedAt": null,
       "cardObject": {
@@ -72,14 +72,14 @@ router.post(
   handleValidationErrors,
   async (req, res, next) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = parseInt(req.user.id);
       const createdAt = dayjs().toISOString();
 
       const game = await createNewGameWithSetup(userId, createdAt);
+      
       res.status(201).json(game);
     } catch (error) {
-      console.error(error);
-      next(ErrorDTO.internalServerError("Failed to create game"));
+      next(error);
     }
   }
 );
@@ -123,7 +123,7 @@ router.get(
   async (req, res, next) => {
     try {
       const { gameId } = req.params;
-
+      
       // 1. check if game exists
       const game = await dao.getGameById(gameId);
       if (!game) {
@@ -139,7 +139,6 @@ router.get(
         });
       }
 
-
       // 3. increment round number, shoud not go over 3 or 1 depending on isdemo flag but limited
       // by the previous check
       game.roundNum += 1;
@@ -151,22 +150,19 @@ router.get(
         game.roundNum
       );
       if (!nextCardRecord) {
-        return next(
-          ErrorDTO.notFound(
-            `No card found for game ${gameId} in round ${game.roundNum}`
-          )
-        );
+        return next(ErrorDTO.notFound(
+          `No card found for game ${gameId} in round ${game.roundNum}`
+        ));
       }
       const nextCard = await dao.getCardById(nextCardRecord.cardId);
       if (!nextCard) {
-        return next(
-          ErrorDTO.notFound(`Card with ID ${nextCardRecord.cardId} not found`)
-        );
+        return next(ErrorDTO.notFound(`Card with ID ${nextCardRecord.cardId} not found`));
       }
 
       // 5. Update next card record with drawn datetime
       await dao.updateGameRecord(
         nextCardRecord.id,
+        null,
         null,
         dayjs().toISOString(),
         null
@@ -180,11 +176,7 @@ router.get(
 
       res.status(200).json(response);
     } catch (error) {
-      next(
-        error instanceof ErrorDTO
-          ? error
-          : ErrorDTO.internalServerError("Failed to retrieve game data")
-      );
+      next(error);
     }
   }
 );
@@ -240,42 +232,42 @@ router.put(
       );
 
       if (!currentRecord) {
-        return next(
-          ErrorDTO.notFound(
-            `No record found for game ${gameId} in round ${game.roundNum}`
-          )
-        );
+        return next(ErrorDTO.notFound(
+          `No record found for game ${gameId} in round ${game.roundNum}`
+        ));
       }
 
-      currentRecord.respondedAt = respondedAt.toISOString();
-
+      currentRecord.respondedAt = respondedAt.toISOString();      
       if (
         dayjs(currentRecord.respondedAt).diff(
           dayjs(currentRecord.requestedAt)
         ) > CONFIG.MAX_RESPONSE_TIME
       ) {
         // 3.1 User did not answer in time
-        currentRecord.wasGuessedInTime = false;
+        currentRecord.wasGuessed = false;
+        currentRecord.timedOut = true;
         response = {
           isCorrect: false,
         };
       } else {
         // User has answered in time
+        currentRecord.timedOut = false;
         // 3.1 Check if the user answer (as cards IDs) matches the true card IDs ordered by misery index
         const evaluationResult = evaluateUserAnswer(game, cardsIds);
         if (evaluationResult.isCorrect) {
           // 3.2 User answer is correct
-          currentRecord.wasGuessedInTime = true;
+          currentRecord.wasGuessed = true;
         } else {
           // 3.3 User answer is incorrect
-          currentRecord.wasGuessedInTime = false;
+          currentRecord.wasGuessed = false;
         }
         response = evaluationResult;
       }
       // 4. Update game record
       await dao.updateGameRecord(
         currentRecord.id,
-        currentRecord.wasGuessedInTime,
+        currentRecord.wasGuessed,
+        currentRecord.timedOut,
         currentRecord.requestedAt,
         currentRecord.respondedAt
       );
@@ -283,11 +275,7 @@ router.put(
       // 5. return response
       res.status(200).json(response);
     } catch (error) {
-      next(
-        error instanceof ErrorDTO
-          ? error
-          : ErrorDTO.internalServerError("Failed to retrieve game data")
-      );
+      next(error);
     }
   }
 );
