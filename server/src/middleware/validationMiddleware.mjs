@@ -1,4 +1,4 @@
-import { validationResult, body } from "express-validator";
+import { validationResult, body, param } from "express-validator";
 import ErrorDTO from "../models/errors.mjs";
 
 export const handleValidationErrors = (req, res, next) => {
@@ -13,20 +13,20 @@ export const handleValidationErrors = (req, res, next) => {
   next();
 };
 // custom validator to check if userId matches session
-export const validateUserIdMatchesSession = [
-  body("userId").isInt().withMessage("Invalid userId format"),
-  body("userId").custom((value, { req }) => {
-    if (value !== req.user.id) {
-      next(
-        ErrorDTO.forbidden("User ID does not match session user ID")
-      );
+export const validateUsernameMatchesSession = [
+  param("userId").isAlphanumeric().withMessage("Invalid userId format")
+    .isLength({ min: 1 }).withMessage("userId cannot be empty")
+    .customSanitizer((value) => value.trim()) // sanitize input
+    .custom((value, { req }) => {
+    if (value !== req.user.username) {
+      throw ErrorDTO.forbidden("User ID does not match session user ID");
     }
     return true;
   }),
 ];
 
 export const validateGameId = [
-  body('gameId').isInt().withMessage('Invalid gameId format'),
+  param('gameId').isInt().withMessage('Invalid gameId format'),
 ];
 
 export const validateCardIds = [
@@ -35,9 +35,7 @@ export const validateCardIds = [
     .withMessage('cardsIds must be an array with 4 to 6 elements')
     .custom((value) => {
       if (!value.every(id => Number.isInteger(id) && id > 0)) {
-        next(
-          ErrorDTO.badRequest("cardsIds must contain only positive integers")
-        );
+        throw ErrorDTO.badRequest("cardsIds must contain only positive integers");
       }
       return true;
     }),

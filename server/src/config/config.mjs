@@ -26,6 +26,8 @@ const CONFIG = {
   FULL_ROUNDS: 3, // Total rounds for full game
   DEMO_ROUNDS: 1, // Total rounds for demo game
   MAX_RESPONSE_TIME: 30000, // Time in milliseconds to answer a question
+  HASHED_PASSWORD_KEY_LENGTH: 32, // Length of the hashed password
+  HASHED_PASSWORD_SALT_LENGTH: 16, // Length of the salt for hashed password
 };
 
 export default CONFIG;

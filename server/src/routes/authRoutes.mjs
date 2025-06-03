@@ -6,7 +6,12 @@ const router = express.Router();
 
 // POST /api/v1/auth/login
 router.post('/', passport.authenticate('local'), function(req, res) {
-  return res.status(201).json(req.user);
+  return res.json({
+    authenticated: true,
+    user: {
+      username: req.user.username,
+    },
+  });
 });
 
 // GET /api/v1/auth/current - Get current user session
@@ -14,7 +19,6 @@ router.get('/current', (req, res, next) => {  if(req.isAuthenticated()) {
     res.json({
       authenticated: true,
       user: {
-        id: req.user.id,
         username: req.user.username
       }
     });
