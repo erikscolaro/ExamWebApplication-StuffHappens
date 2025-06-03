@@ -1,538 +1,67 @@
-GET http://localhost:3001/api/v1/
-###
-//Authentication
-POST http://localhost:3001/api/v1/sessions/ 
+
+### FLUSSO TIPICO DI ESECUZIONE ###
+### Utente: pirataarrabbiato99, Password: password ###
+
+@baseUrl = http://localhost:3001
+@username = pirataarrabbiato99
+
+### 1. LOGIN - Autentica l'utente
+POST {{baseUrl}}/api/v1/sessions
 Content-Type: application/json
 
 {
-  "username": "pirataarrabbiato99",
-  "password": "arrrg!!!"
-}
-###
-GET http://localhost:3001/api/v1/sessions/current
-###
-DELETE http://localhost:3001/api/v1/sessions/current
-###
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-{
-  "username": "jacksparrow",
-  "password": "pofferbacco"
-}
-###
-GET http://localhost:3001/api/v1/sessions/current
-###
-DELETE http://localhost:3001/api/v1/sessions/current
-###
-
-//DEMO
-POST http://localhost:3001/api/v1/demos
-Content-Type: application/json
-
-{}
-###
-
-// =================== GAME ROUTES TESTING ===================
-// Note: Prima eseguire il login per ottenere la sessione
-
-// 1. LOGIN PER TESTING GAMES
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-
-{
-  "username": "jacksparrow",
-  "password": "pofferbacco"
-}
-###
-
-// 2. GET GAME HISTORY - Ottenere cronologia giochi utente
-GET http://localhost:3001/api/v1/users/1/games
-###
-
-// 3. POST CREATE NEW GAME - Creare un nuovo gioco
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-02T19:30:00.000Z"
-}
-###
-
-// 4. GET GAME STATUS - Ottenere status di un gioco specifico
-// Nota: Sostituire '1' con l'ID del gioco ottenuto dalla richiesta precedente
-GET http://localhost:3001/api/v1/users/1/games/1
-###
-
-// 5. PUT SUBMIT ANSWER - Inviare risposta per un round
-// Nota: Sostituire gameId e roundId con valori validi
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [1, 2, 3]
-  }
-}
-###
-
-// =================== TESTING EDGE CASES ===================
-
-// 6. GET GAME HISTORY - Utente non autorizzato (different user ID)
-GET http://localhost:3001/api/v1/users/2/games
-###
-
-// 7. GET NON-EXISTENT GAME
-GET http://localhost:3001/api/v1/users/1/games/999
-###
-
-// 8. POST CREATE GAME - Dati invalidi
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "invalidField": "invalid"
-}
-###
-
-// 9. PUT SUBMIT ANSWER - Game non esistente
-PUT http://localhost:3001/api/v1/users/1/games/999/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [1, 2, 3]
-  }
-}
-###
-
-// 10. PUT SUBMIT ANSWER - Formato risposta invalido
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": "invalid_format"
-  }
-}
-###
-
-// =================== AUTHENTICATION TESTING ===================
-
-// 11. LOGOUT per testare richieste senza autenticazione
-DELETE http://localhost:3001/api/v1/sessions/current
-###
-
-// 12. GET GAME HISTORY - Senza autenticazione
-GET http://localhost:3001/api/v1/users/1/games
-###
-
-// 13. POST CREATE GAME - Senza autenticazione
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-02T19:30:00.000Z"
-}
-###
-
-// =================== COMPLETE GAME FLOW TESTING ===================
-
-// 14. RE-LOGIN per flusso completo
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-
-{
-  "username": "jacksparrow",
-  "password": "pofferbacco"
-}
-###
-
-// 15. FLUSSO COMPLETO: Crea nuovo gioco e gioca
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-02T20:00:00.000Z"
-}
-###
-
-// 16. Ottieni status del gioco appena creato
-GET http://localhost:3001/api/v1/users/1/games/2
-###
-
-// 17. Invia prima risposta (Round 1)
-PUT http://localhost:3001/api/v1/users/1/games/2/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [0, 1, 2]
-  }
-}
-###
-
-// 18. Controlla status dopo prima risposta
-GET http://localhost:3001/api/v1/users/1/games/2
-###
-
-// 19. Invia seconda risposta (Round 2)
-PUT http://localhost:3001/api/v1/users/1/games/2/rounds/2
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [0, 1, 2, 3]
-  }
-}
-###
-
-// 20. Controlla status dopo seconda risposta
-GET http://localhost:3001/api/v1/users/1/games/2
-###
-
-// 21. Continua fino alla fine del gioco (Round 3)
-PUT http://localhost:3001/api/v1/users/1/games/2/rounds/3
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [0, 1, 2, 3, 4]
-  }
-}
-###
-
-// 22. Controlla status finale del gioco
-GET http://localhost:3001/api/v1/users/1/games/2
-###
-
-// 23. Verifica cronologia completa con giochi terminati
-GET http://localhost:3001/api/v1/users/1/games
-###
-
-// =================== ADDITIONAL COMPREHENSIVE TESTS ===================
-
-// 24. VALIDATION TESTING - Invalid Date Format
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-
-{
-  "username": "jacksparrow",
-  "password": "pofferbacco"
-}
-###
-
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "invalid-date-format"
-}
-###
-
-// 25. VALIDATION TESTING - Missing required fields
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{}
-###
-
-// 26. VALIDATION TESTING - Extra unexpected fields
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-02T19:30:00.000Z",
-  "extraField": "should be ignored",
-  "maliciousField": "<script>alert('xss')</script>"
-}
-###
-
-// 27. EDGE CASE - Submit answer with empty array
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": []
-  }
-}
-###
-
-// 28. EDGE CASE - Submit answer with null values
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [null, null, null]
-  }
-}
-###
-
-// 29. EDGE CASE - Submit answer with non-integer values
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": ["a", "b", "c"]
-  }
-}
-###
-
-// 30. EDGE CASE - Submit answer with too many cards
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-  }
-}
-###
-
-// 31. EDGE CASE - Submit answer with duplicate card IDs
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [1, 1, 1]
-  }
-}
-###
-
-// 32. EDGE CASE - Submit answer with out-of-range card IDs
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [999, 1000, 1001]
-  }
-}
-###
-
-// 33. PERFORMANCE TEST - Rapid requests
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-02T21:00:00.000Z"
-}
-###
-
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-02T21:01:00.000Z"
-}
-###
-
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-02T21:02:00.000Z"
-}
-###
-
-// 34. CONCURRENCY TEST - Try to submit to same round twice
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [0, 1, 2]
-  }
-}
-###
-
-PUT http://localhost:3001/api/v1/users/1/games/1/rounds/1
-Content-Type: application/json
-
-{
-  "cardsIds": {
-    "answer": [3, 4, 5]
-  }
-}
-###
-
-// 35. AUTHENTICATION EDGE CASE - Invalid credentials
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-
-{
-  "username": "nonexistentuser",
-  "password": "wrongpassword"
-}
-###
-
-// 36. AUTHENTICATION EDGE CASE - Empty credentials
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-
-{
-  "username": "",
-  "password": ""
-}
-###
-
-// 37. AUTHENTICATION EDGE CASE - Missing credentials
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-
-{}
-###
-
-// 38. SQL INJECTION TESTING - Malicious username
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-
-{
-  "username": "admin'; DROP TABLE users; --",
+  "username": "{{username}}",
   "password": "password"
 }
-###
 
-// 39. XSS TESTING - Script in game creation
-POST http://localhost:3001/api/v1/sessions/ 
+### 2. VERIFICA SESSIONE CORRENTE (opzionale)
+GET {{baseUrl}}/api/v1/sessions/current
+
+### 3. CREA NUOVA PARTITA NON DEMO
+POST {{baseUrl}}/api/v1/users/{{username}}/games
+Content-Type: application/json
+
+### 4. OTTIENI STORIA PARTITE (opzionale - per vedere lo stato)
+GET {{baseUrl}}/api/v1/users/{{username}}/games
+
+### 5. INIZIA PRIMO ROUND - Ottieni la prima carta
+# Sostituisci {gameId} con l'ID della partita creata al punto 3
+GET {{baseUrl}}/api/v1/users/{{username}}/games/4/draw
+
+### 6. VERIFICA RISPOSTA PRIMO ROUND
+# Sostituisci {gameId} con l'ID della partita
+# cardsIds dovrebbe contenere gli ID delle carte nell'ordine corretto (dal misery index più basso al più alto)
+PUT {{baseUrl}}/api/v1/users/{{username}}/games/4/check
 Content-Type: application/json
 
 {
-  "username": "jacksparrow",
-  "password": "pofferbacco"
+  "cardsIds": [1, 2, 3, 17]
 }
-###
 
-POST http://localhost:3001/api/v1/users/1/games
+### 7. INIZIA SECONDO ROUND - Ottieni la seconda carta
+GET {{baseUrl}}/api/v1/users/{{username}}/games/17/draw
+
+### 8. VERIFICA RISPOSTA SECONDO ROUND
+PUT {{baseUrl}}/api/v1/users/{{username}}/games/17/check
 Content-Type: application/json
 
 {
-  "createdAt": "2025-06-02T22:00:00.000Z",
-  "maliciousField": "<script>alert('xss')</script>"
+  "cardsIds": [1, 2, 3, 4]
 }
-###
 
-// 40. DEMO ROUTES COMPREHENSIVE TESTING
-POST http://localhost:3001/api/v1/demos
-Content-Type: application/json
+### 9. INIZIA TERZO ROUND - Ottieni la terza carta
+GET {{baseUrl}}/api/v1/users/{{username}}/games/1/draw
 
-{}
-###
-
-// 41. GET Demo with valid ID format
-GET http://localhost:3001/api/v1/demos/abc123
-###
-
-// 42. GET Demo with invalid/empty ID
-GET http://localhost:3001/api/v1/demos/
-###
-
-// 43. PUT Demo answer - test demo answer submission
-PUT http://localhost:3001/api/v1/demos/abc123/rounds/1
+### 10. VERIFICA RISPOSTA TERZO ROUND (finale)
+PUT {{baseUrl}}/api/v1/users/{{username}}/games/1/check
 Content-Type: application/json
 
 {
-  "cardsIds": {
-    "answer": [0, 1, 2]
-  }
+  "cardsIds": [1, 2, 3, 4, 5, 6]
 }
-###
 
-// 44. AUTHORIZATION TESTING - Cross-user access attempts
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
+### 11. VERIFICA STATO FINALE PARTITA
+GET {{baseUrl}}/api/v1/users/{{username}}/games
 
-{
-  "username": "pirataarrabbiato99",
-  "password": "arrrg!!!"
-}
-###
-
-// Try to access another user's games
-GET http://localhost:3001/api/v1/users/1/games
-###
-
-// Try to create game for another user
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-02T22:30:00.000Z"
-}
-###
-
-// 45. STRESS TEST - Large payload
-POST http://localhost:3001/api/v1/users/2/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-02T22:30:00.000Z",
-  "largeField": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt."
-}
-###
-
-// 46. FINAL COMPREHENSIVE FLOW - Multiple users, multiple games
-DELETE http://localhost:3001/api/v1/sessions/current
-###
-
-// Login as user 1
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-
-{
-  "username": "jacksparrow",
-  "password": "pofferbacco"
-}
-###
-
-// Create multiple games for user 1
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-03T10:00:00.000Z"
-}
-###
-
-POST http://localhost:3001/api/v1/users/1/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-03T10:30:00.000Z"
-}
-###
-
-// Check user 1 history
-GET http://localhost:3001/api/v1/users/1/games
-###
-
-// Switch to user 2
-DELETE http://localhost:3001/api/v1/sessions/current
-###
-
-POST http://localhost:3001/api/v1/sessions/ 
-Content-Type: application/json
-
-{
-  "username": "pirataarrabbiato99",
-  "password": "arrrg!!!"
-}
-###
-
-// Create game for user 2
-POST http://localhost:3001/api/v1/users/2/games
-Content-Type: application/json
-
-{
-  "createdAt": "2025-06-03T11:00:00.000Z"
-}
-###
-
-// Check user 2 history (should be different)
-GET http://localhost:3001/api/v1/users/2/games
-###
-
-// =================== END OF COMPREHENSIVE TESTING ===================
+### 12. LOGOUT - Termina la sessione
+DELETE {{baseUrl}}/api/v1/sessions/current
