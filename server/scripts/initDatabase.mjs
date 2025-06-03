@@ -55,12 +55,12 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
         // Insert test users with correct hashes
         const insertUser1 = `
           INSERT INTO USERS (USERNAME, HASHEDPASSWORD, SALT)
-          VALUES ('jacksparrow', '3c8e325569c54efa9e8e37ec34047e1a', '1234')
+          VALUES ('jacksparrow', '5408041faad41553ee776e8b7320d84e998cdf1398d263a7bd3bc21791c7e9ae', '732b46940d6b4a1cccbba10363c17bef')
         `;
         
         const insertUser2 = `
           INSERT INTO USERS (USERNAME, HASHEDPASSWORD, SALT)
-          VALUES ('pirataarrabbiato99', '0cec3c1f9ceefb3cf6a8adea00f02f71ab7f00f871bf0d797ebee7119e123e57e', '16')
+          VALUES ('pirataarrabbiato99', 'ed3eb93372fc4173cc6a332dcfae9ea4ef7af0a9eb736b9f94e59f6b4df19930', '2a71df3f9a7a24eb4f57367c95f42bff')
         `;
         
         db.run(insertUser1, (err) => {
@@ -143,15 +143,16 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
     
     const createGameRecordsTable = `
       CREATE TABLE GAME_RECORDS (
-        ID INTEGER PRIMARY KEY AUTOINCREMENT,
-        GAMEID INTEGER NOT NULL,
-        CARDID INTEGER NOT NULL,
-        ROUND INTEGER NOT NULL,
-        WASGUESSEDINTIME INTEGER,
-        REQUESTEDAT TEXT,
-        RESPONDEDAT TEXT,
-        FOREIGN KEY (GAMEID) REFERENCES GAMES(ID),
-        FOREIGN KEY (CARDID) REFERENCES CARDS(ID)
+      ID INTEGER PRIMARY KEY AUTOINCREMENT,
+      GAMEID INTEGER NOT NULL,
+      CARDID INTEGER NOT NULL,
+      ROUND INTEGER NOT NULL,
+      WASGUESSED INTEGER,
+      TIMEDOUT INTEGER,
+      REQUESTEDAT TEXT,
+      RESPONDEDAT TEXT,
+      FOREIGN KEY (GAMEID) REFERENCES GAMES(ID),
+      FOREIGN KEY (CARDID) REFERENCES CARDS(ID)
       )
     `;
     

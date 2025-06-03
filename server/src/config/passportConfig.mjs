@@ -10,7 +10,7 @@ passport.use(new LocalStrategy(async function verify(username, password, cb) {
 }));
 
 passport.serializeUser((user, cb) => {
-  cb(null, {id: user.id, username: user.username});
+  cb(null, user.toJSON());
 });
 
 passport.deserializeUser((user, cb) => {

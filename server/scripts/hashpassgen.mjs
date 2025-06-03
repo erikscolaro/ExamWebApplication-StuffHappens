@@ -4,26 +4,18 @@ import crypto from 'crypto';
 
 // Get command line arguments
 const password = process.argv[2] || "password";
-const salt = process.argv[3] || "16";
-const keylen = parseInt(process.argv[4]) || 32;
+const keylen = 32; // Default key length
+const salt = "732b46940d6b4a1cccbba10363c17bef"; ; // Generate a random salt
 
-// Validate inputs
-if (!salt || salt.length === 0) {
-  console.error("Error: Salt cannot be empty");
-  process.exit(1);
-}
-
-if (isNaN(keylen) || keylen <= 0) {
-  console.error("Error: Key length must be a positive number");
-  process.exit(1);
-}
 
 try {
   // Generate hashed password
-  const hashedPassword = crypto.scryptSync(password, salt.toString(), keylen).toString('hex');
+  const hashedPassword = crypto
+    .scryptSync(password, Buffer.from(salt, "hex"), keylen)
+    .toString("hex");
   
   console.log(`Password: ${password}`);
-  console.log(`Salt: ${salt}`);
+  console.log(`Salt: ${salt.toString('hex')}`);
   console.log(`Key length: ${keylen}`);
   console.log(`Hashed password: ${hashedPassword}`);
 } catch (error) {

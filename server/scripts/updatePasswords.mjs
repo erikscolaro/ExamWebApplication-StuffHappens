@@ -26,22 +26,38 @@ const updateJack = `
   WHERE USERNAME = ?
 `;
 
-db.run(updateJack, ['3c8e325569c54efa9e8e37ec34047e1a', '1234', 'jacksparrow'], (err) => {
-  if (err) {
-    console.error('Error updating jacksparrow:', err);
-  } else {
-    console.log('Updated jacksparrow password');
+db.run(
+  updateJack,
+  [
+    "5408041faad41553ee776e8b7320d84e998cdf1398d263a7bd3bc21791c7e9ae",
+    "732b46940d6b4a1cccbba10363c17bef",
+    "jacksparrow",
+  ],
+  (err) => {
+    if (err) {
+      console.error("Error updating jacksparrow:", err);
+    } else {
+      console.log("Updated jacksparrow password");
+    }
   }
-});
+);
 
 // Update pirataarrabbiato99 with correct hash
-db.run(updateJack, ['0cec3c1f9ceefb3cf6a8adea00f02f71ab7f00f871bf0d797ebee7119e123e57e', '16', 'pirataarrabbiato99'], (err) => {
-  if (err) {
-    console.error('Error updating pirataarrabbiato99:', err);
-  } else {
-    console.log('Updated pirataarrabbiato99 password');
+db.run(
+  updateJack,
+  [
+    "ed3eb93372fc4173cc6a332dcfae9ea4ef7af0a9eb736b9f94e59f6b4df19930",
+    "2a71df3f9a7a24eb4f57367c95f42bff",
+    "pirataarrabbiato99",
+  ],
+  (err) => {
+    if (err) {
+      console.error("Error updating pirataarrabbiato99:", err);
+    } else {
+      console.log("Updated pirataarrabbiato99 password");
+    }
   }
-});
+);
 
 // Close database
 setTimeout(() => {
