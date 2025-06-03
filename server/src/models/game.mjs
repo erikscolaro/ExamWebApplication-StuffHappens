@@ -5,8 +5,8 @@ export class Game {
     this.userid = userid;
     this.createdat = createdat;
     this.roundNum = roundNum;
-    this.isEnded = isended;
-    this.isDemo = isdemo;
+    this.isEnded = isended === null ? false : Boolean(isended);
+    this.isDemo = isdemo === null ? false : Boolean(isdemo);
     this.records = records;
   }
   toJSON() {

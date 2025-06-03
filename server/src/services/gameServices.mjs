@@ -4,6 +4,7 @@ import * as dao from '../dao/dao.mjs';
 import CONFIG from '../config/config.mjs';
 import { Game } from '../models/game.mjs';
 import crypto from 'crypto';
+import dayjs from 'dayjs';
 
 // =================== GAME SERVICES ===================
 
@@ -121,5 +122,176 @@ export function evaluateUserAnswer(game, userAnswer) {
       correctOrder: correctOrderedIds
     };
   }
+}
+
+// --- Route Handler Helpers ---
+
+/**
+ * Common logic for drawing the next card in a game
+ * @param {number} gameId - The game ID
+ * @param {boolean} isDemo - Whether this is a demo game (for validation)
+ * @param {number|null} userId - The user ID (null for demo games)
+ * @returns {Promise<Object>} Response object with game and nextCard
+ */
+export async function handleDrawCard(gameId, isDemo = null, userId = null) {
+  // 1. Get game with complete records and cards
+  const game = await dao.getGameWithRecordsAndCards(gameId);
+  if (!game || !game.records || game.records.length === 0) {
+    throw ErrorDTO.notFound(`Game with ID ${gameId} not found`);
+  }
+
+  // 2. validate game type if specified
+  if (isDemo !== null && game.isDemo !== isDemo) {
+    const gameType = isDemo ? "demo game" : "regular game";
+    throw ErrorDTO.badRequest(`Game with ID ${gameId} is not a ${gameType}`);
+  }
+
+  // 3. SECURITY CHECK: Verify user authorization
+  if (isDemo === false) {
+    // For regular games, verify user owns the game
+    if (!userId || game.userid !== userId) {
+      throw ErrorDTO.forbidden(`Access denied: Game ${gameId} does not belong to user ${userId}`);
+    }
+  } else if (isDemo === true) {
+    // For demo games, verify it's actually a demo (userId should be null)
+    if (game.userid !== null) {
+      throw ErrorDTO.forbidden(`Access denied: Game ${gameId} is not a demo game`);
+    }
+  }
+  // 4. set game end state if needed and return if ended
+  const updatedGame = await checkAndUpdateGameEnd(game);
+  if (updatedGame.isEnded) {
+    return {
+      game: updatedGame.toJSON(),
+      nextCard: null // No next card if game is ended
+    };
+  }
+
+  // 5. increment round number
+  game.roundNum += 1;
+  await dao.updateGame(game.id, game.roundNum, game.isEnded);
+  // 6. Extract the card for the current round (nextCard)
+  const nextCardRecord = game.records.find(record => record.round === game.roundNum);
+  if (!nextCardRecord || !nextCardRecord.card) {
+    throw ErrorDTO.notFound(
+      `No card found for game ${gameId} in round ${game.roundNum}`
+    );
+  }
+  const nextCard = nextCardRecord.card;
+
+  // 7. Update next card record with drawn datetime
+  await dao.updateGameRecord(
+    nextCardRecord.id,
+    null,
+    null,
+    dayjs().toISOString(),
+    null
+  );
+
+  // 8. Filter records in game: round < game.roundNum && timedOut = false
+  game.records = game.records.filter(
+    record => record.round < game.roundNum && record.timedOut === false
+  );
+
+  // 9. Prepare response with game state and next card
+  return {
+    game: game.toJSON(),
+    nextCard: nextCard.toJSONWithoutMiseryIndex()
+  };
+}
+
+/**
+ * Common logic for checking user answers in a game
+ * @param {number} gameId - The game ID
+ * @param {Array<number>} cardsIds - Array of card IDs in user's order
+ * @param {boolean} isDemo - Whether this is a demo game (for validation)
+ * @param {number|null} userId - The user ID (null for demo games)
+ * @returns {Promise<Object>} Response object with evaluation result
+ */
+export async function handleCheckAnswer(gameId, cardsIds, isDemo = null, userId = null) {
+  // saved before all to minimize lag issues with async
+  const respondedAt = dayjs();
+
+  // 1. check if game exists
+  const game = await dao.getGameWithRecordsAndCards(gameId);
+  if (!game || !game.records || game.records.length === 0) {
+    throw ErrorDTO.notFound(`Game with ID ${gameId} not found`);
+  }
+  
+  // 2. validate game type and user authorization
+  if (isDemo !== null && game.isDemo !== isDemo) {
+    const gameType = isDemo ? "demo game" : "regular game";
+    throw ErrorDTO.badRequest(`Game with ID ${gameId} is not a ${gameType}`);
+  }
+
+  // 3. SECURITY CHECK: Verify user authorization
+  if (isDemo === false) {
+    // For regular games, verify user owns the game
+    if (!userId || game.userid !== userId) {
+      throw ErrorDTO.forbidden(`Access denied: Game ${gameId} does not belong to user ${userId}`);
+    }
+  } else if (isDemo === true) {
+    // For demo games, verify it's actually a demo (userId should be null)
+    if (game.userid !== null) {
+      throw ErrorDTO.forbidden(`Access denied: Game ${gameId} is not a demo game`);
+    }
+  }
+
+  // 2. manage game end state
+  if (game.isEnded) {
+    const gameType = game.isDemo ? "Demo game" : "Game";
+    throw ErrorDTO.badRequest(`${gameType} has already ended`);
+  } 
+
+  // 3. Check if the user answered in time
+  let response = null;
+  const currentRecord = game.records.find(
+    (record) => record.round === game.roundNum
+  );
+
+  if (!currentRecord) {
+    throw ErrorDTO.notFound(
+      `No record found for game ${gameId} in round ${game.roundNum}`
+    );
+  }
+
+  currentRecord.respondedAt = respondedAt.toISOString();      
+  if (
+    dayjs(currentRecord.respondedAt).diff(
+      dayjs(currentRecord.requestedAt)
+    ) > CONFIG.MAX_RESPONSE_TIME
+  ) {
+    // 3.1 User did not answer in time
+    currentRecord.wasGuessed = false;
+    currentRecord.timedOut = true;
+    response = {
+      isCorrect: false,
+    };
+  } else {
+    // User has answered in time
+    currentRecord.timedOut = false;
+    // 3.2 Check if the user answer (as cards IDs) matches the true card IDs ordered by misery index
+    const evaluationResult = evaluateUserAnswer(game, cardsIds);
+    if (evaluationResult.isCorrect) {
+      // 3.3 User answer is correct
+      currentRecord.wasGuessed = true;
+    } else {
+      // 3.4 User answer is incorrect
+      currentRecord.wasGuessed = false;
+    }
+    response = evaluationResult;
+  }
+  
+  // 4. Update game record
+  await dao.updateGameRecord(
+    currentRecord.id,
+    currentRecord.wasGuessed,
+    currentRecord.timedOut,
+    currentRecord.requestedAt,
+    currentRecord.respondedAt
+  );
+
+  // 5. return response
+  return response;
 }
 

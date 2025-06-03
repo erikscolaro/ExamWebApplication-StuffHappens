@@ -1,6 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import ErrorDTO from '../models/errors.mjs';
+import isLoggedIn from '../middleware/authMiddleware.mjs';
 
 const router = express.Router();
 
@@ -14,21 +15,18 @@ router.post('/', passport.authenticate('local'), function(req, res) {
   });
 });
 
-// GET /api/v1/auth/current - Get current user session
-router.get('/current', (req, res, next) => {  if(req.isAuthenticated()) {
+// GET /api/v1/auth/current - Check if user is logged in
+router.get('/current', isLoggedIn, (req, res, next) => {
     res.json({
       authenticated: true,
       user: {
         username: req.user.username
       }
     });
-  } else {
-    next(ErrorDTO.unauthorized("Not authenticated user."));
-  }
 });
 
 // POST /api/v1/auth/logout - Logout user
-router.delete('/current', (req, res, next) => {
+router.delete('/current', isLoggedIn, (req, res, next) => {
   req.logout((err) => {
     if (err) {
       return next(ErrorDTO.internalServerError("Logout error"));
