@@ -9,7 +9,6 @@ export class Game {
     this.isDemo = isdemo;
     this.records = records;
   }
-
   toJSON() {
     return {
       id: this.id,
@@ -17,30 +16,30 @@ export class Game {
       roundNum: this.roundNum,
       isEnded: this.isEnded,
       isDemo: this.isDemo,
-      records: this.records.map(record => record.toJSON())
+      records: this.records.filter(record => this.roundNum >= record.round).map(record => record.toJSON())
     };
   }
 }
 
 export class GameRecord {
-  constructor(id, gameid, cardid, cardObject, round, wasguessedintime, requestedAt = null, respondedAt = null) {
+  constructor(id, gameId, cardId, card, round, wasGuessed, timedOut, requestedAt = null, respondedAt = null) {
     this.id = id;
-    this.gameid = gameid;
-    this.cardid = cardid;
-    this.cardObject = cardObject;
+    this.gameId = gameId;
+    this.cardId = cardId;
+    this.card = card;
     this.round = round;
-    this.wasguessedintime = wasguessedintime;
+    this.wasGuessed = wasGuessed === null ? null : Boolean(wasGuessed);
+    this.timedOut = timedOut === null ? null : Boolean(timedOut);
     this.requestedAt = requestedAt; // set when the card is requested serverside
     this.respondedAt = respondedAt; // Will be set when the answer is submitted serverside
   }
 
   toJSON() {
     return {
-      card: this.cardObject ? this.cardObject.toJSON() : null,
+      card: this.card ? this.card.toJSON() : null,
       round: this.round,
-      wasGuessedInTime: this.wasguessedintime,
-      requestedAt: this.requestedAt,
-      respondedAt: this.respondedAt
+      wasGuessed: (this.wasGuessed !== null) ? Boolean(this.wasGuessed): null,
+      timedOut: (this.timedOut !== null) ? Boolean(this.timedOut) : null,
     };
   }
 }
