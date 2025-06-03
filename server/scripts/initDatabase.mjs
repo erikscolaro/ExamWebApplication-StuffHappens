@@ -33,12 +33,12 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
     console.log(' -', row.name);
   });
 
-  // If USER table doesn't exist, create it
-  if (!rows.find(row => row.name === 'USER')) {
-    console.log('Creating USER table...');
+  // If USERS table doesn't exist, create it (plural convention)
+  if (!rows.find(row => row.name === 'USERS')) {
+    console.log('Creating USERS table...');
     
-    const createUserTable = `
-      CREATE TABLE USER (
+    const createUsersTable = `
+      CREATE TABLE USERS (
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         USERNAME TEXT UNIQUE NOT NULL,
         HASHEDPASSWORD TEXT NOT NULL,
@@ -46,21 +46,21 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
       )
     `;
     
-    db.run(createUserTable, (err) => {
+    db.run(createUsersTable, (err) => {
       if (err) {
-        console.error('Error creating USER table:', err);
+        console.error('Error creating USERS table:', err);
       } else {
-        console.log('USER table created successfully');
+        console.log('USERS table created successfully');
         
-        // Insert test users
+        // Insert test users with correct hashes
         const insertUser1 = `
-          INSERT INTO USER (USERNAME, HASHEDPASSWORD, SALT)
-          VALUES ('jacksparrow', 'ef661d309d6e55c4dce1719d72d85bdb3a7f0460b31e0664e5ad485138401749', 'salt1')
+          INSERT INTO USERS (USERNAME, HASHEDPASSWORD, SALT)
+          VALUES ('jacksparrow', '3c8e325569c54efa9e8e37ec34047e1a', '1234')
         `;
         
         const insertUser2 = `
-          INSERT INTO USER (USERNAME, HASHEDPASSWORD, SALT)
-          VALUES ('pirataarrabbiato99', 'c6ff3fc2178b7d4c6aa6a6bf0e5b95e6f44d1a5bd04a45a1b8a1e7c5d7e8f9a0', 'salt2')
+          INSERT INTO USERS (USERNAME, HASHEDPASSWORD, SALT)
+          VALUES ('pirataarrabbiato99', '0cec3c1f9ceefb3cf6a8adea00f02f71ab7f00f871bf0d797ebee7119e123e57e', '16')
         `;
         
         db.run(insertUser1, (err) => {
@@ -76,87 +76,90 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
     });
   }
 
-  // If CARD table doesn't exist, create it
-  if (!rows.find(row => row.name === 'CARD')) {
-    console.log('Creating CARD table...');
+  // If CARDS table doesn't exist, create it (plural convention)
+  if (!rows.find(row => row.name === 'CARDS')) {
+    console.log('Creating CARDS table...');
     
-    const createCardTable = `
-      CREATE TABLE CARD (
+    const createCardsTable = `
+      CREATE TABLE CARDS (
         ID INTEGER PRIMARY KEY,
         NAME TEXT NOT NULL,
-        IMAGE TEXT NOT NULL
+        IMAGEPATH TEXT NOT NULL,
+        MISERYINDEX INTEGER NOT NULL
       )
     `;
     
-    db.run(createCardTable, (err) => {
+    db.run(createCardsTable, (err) => {
       if (err) {
-        console.error('Error creating CARD table:', err);
+        console.error('Error creating CARDS table:', err);
       } else {
-        console.log('CARD table created successfully');
+        console.log('CARDS table created successfully');
         
-        // Insert sample cards
+        // Insert sample cards with misery index
         for (let i = 0; i < 50; i++) {
           const insertCard = `
-            INSERT INTO CARD (ID, NAME, IMAGE) 
-            VALUES (?, ?, ?)
+            INSERT INTO CARDS (ID, NAME, IMAGEPATH, MISERYINDEX) 
+            VALUES (?, ?, ?, ?)
           `;
-          db.run(insertCard, [i, `Card ${i}`, `card${i}.jpg`], (err) => {
+          // Generate random misery index between 1-10
+          const miseryIndex = Math.floor(Math.random() * 10) + 1;
+          db.run(insertCard, [i, `Card ${i}`, `card${i}.jpg`, miseryIndex], (err) => {
             if (err) console.error(`Error inserting card ${i}:`, err);
           });
         }
-        console.log('50 cards inserted');
+        console.log('50 cards inserted with misery indexes');
       }
     });
   }
 
-  // If GAME table doesn't exist, create it
-  if (!rows.find(row => row.name === 'GAME')) {
-    console.log('Creating GAME table...');
+  // If GAMES table doesn't exist, create it (plural convention)
+  if (!rows.find(row => row.name === 'GAMES')) {
+    console.log('Creating GAMES table...');
     
-    const createGameTable = `
-      CREATE TABLE GAME (
+    const createGamesTable = `
+      CREATE TABLE GAMES (
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
-        USER_ID INTEGER NOT NULL,
-        CREATED_AT TEXT NOT NULL,
-        STATUS TEXT NOT NULL DEFAULT 'ongoing',
-        CURRENT_ROUND INTEGER DEFAULT 1,
-        SCORE INTEGER DEFAULT 0,
-        FOREIGN KEY (USER_ID) REFERENCES USER(ID)
+        USERID INTEGER,
+        CREATEDAT TEXT NOT NULL,
+        ROUND INTEGER DEFAULT 1,
+        ISENDED INTEGER DEFAULT 0,
+        ISDEMO INTEGER DEFAULT 0,
+        FOREIGN KEY (USERID) REFERENCES USERS(ID)
       )
     `;
     
-    db.run(createGameTable, (err) => {
+    db.run(createGamesTable, (err) => {
       if (err) {
-        console.error('Error creating GAME table:', err);
+        console.error('Error creating GAMES table:', err);
       } else {
-        console.log('GAME table created successfully');
+        console.log('GAMES table created successfully');
       }
     });
   }
 
-  // If GAME_RECORD table doesn't exist, create it
-  if (!rows.find(row => row.name === 'GAME_RECORD')) {
-    console.log('Creating GAME_RECORD table...');
+  // If GAME_RECORDS table doesn't exist, create it (plural convention)
+  if (!rows.find(row => row.name === 'GAME_RECORDS')) {
+    console.log('Creating GAME_RECORDS table...');
     
-    const createGameRecordTable = `
-      CREATE TABLE GAME_RECORD (
+    const createGameRecordsTable = `
+      CREATE TABLE GAME_RECORDS (
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
-        GAME_ID INTEGER NOT NULL,
-        ROUND_NUMBER INTEGER NOT NULL,
-        CARD_ID INTEGER NOT NULL,
-        USER_POSITION INTEGER,
-        CORRECT_POSITION INTEGER,
-        IS_CORRECT BOOLEAN DEFAULT FALSE,
-        FOREIGN KEY (GAME_ID) REFERENCES GAME(ID),
-        FOREIGN KEY (CARD_ID) REFERENCES CARD(ID)
+        GAMEID INTEGER NOT NULL,
+        CARDID INTEGER NOT NULL,
+        ROUND INTEGER NOT NULL,
+        WASGUESSEDINTIME INTEGER,
+        REQUESTEDAT TEXT,
+        RESPONDEDAT TEXT,
+        FOREIGN KEY (GAMEID) REFERENCES GAMES(ID),
+        FOREIGN KEY (CARDID) REFERENCES CARDS(ID)
       )
     `;
     
-    db.run(createGameRecordTable, (err) => {
+    db.run(createGameRecordsTable, (err) => {
       if (err) {
-        console.error('Error creating GAME_RECORD table:', err);
+        console.error('Error creating GAME_RECORDS table:', err);
       } else {
-        console.log('GAME_RECORD table created successfully');
+        console.log('GAME_RECORDS table created successfully');
       }
     });
   }
