@@ -1,99 +1,171 @@
-import express from 'express';
-import ErrorDTO from '../models/errors.mjs';
-import { listGames, createGame, listGameRecords, createGameRecord } from '../dao/dao.mjs';
+import express from "express";
+import ErrorDTO from "../models/errors.mjs";
+import {
+  handleValidationErrors,
+  validateCardIds,
+  validateGameId,
+} from "../middleware/validationMiddleware.mjs";
+import {
+  createNewGameWithSetup,
+  getUserGameHistory,
+  handleDrawCard,
+  handleCheckAnswer
+} from "../services/gameServices.mjs";
+import dayjs from "dayjs";
 
 const router = express.Router();
 
+// =================== ROUTE HANDLERS ===================
+
 // GET /api/v1/users/:userId/games - Get game history for user
-router.get('/users/:userId/games', async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    
-    // Check if the requesting user can access this user's games
-    if (req.user.id !== parseInt(userId)) {
-      return next(ErrorDTO.forbidden("You can only access your own games."));
+// request: username in params, no body
+// response: array of games with records
+router.get(
+  "/",
+  handleValidationErrors,
+  async (req, res, next) => {
+    try {
+      const userId = parseInt(req.user.id);
+      const games = await getUserGameHistory(userId);
+      res.status(200).json({ history: games });
+    } catch (error) {
+      next(error);
     }
-    
-    const games = await listGames(req.user.id);
-    res.json({ games });
-  } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to retrieve game history."));
   }
-});
+);
 
 // POST /api/v1/users/:userId/games - Create a new game
-router.post('/users/:userId/games', async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    
-    // Check if the requesting user can create games for this user
-    if (req.user.id !== parseInt(userId)) {
-      return next(ErrorDTO.forbidden("You can only create games for yourself."));
-    }
-    
-    const gameId = await createGame(req.user.username);
-    res.status(201).json({ 
-      gameId,
-      message: "Game created successfully"
-    });
-  } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to create game."));
-  }
-});
+// expected empty body, so no validators needed
+/*
+response: game.toJSON() - the game json with first 3 cards with all details.
+{
+  "id": 1,
+  "userId": 1,
+  "createdAt": "2023-10-01T12:00:00Z",
+  "roundNum": 0,
+  "isEnded": false,
+  "isDemo": false,
+  "records": [
+    {
+      "card": {
+        "id": 5,
+        "name": "Card Name",
+        "imageFilename": "http://example.com/image.jpg",
+        "miseryIndex": 10
+      },
+      "round": 0,
+      "wasGuessed": null,
+      "timedOut": null
+    }, {...}, {...}
+  ]
+}
+*/
 
-// GET /api/v1/users/:userId/games/:gameId - Get specific game status
-router.get('/users/:userId/games/:gameId', async (req, res, next) => {
-  try {
-    const { userId, gameId } = req.params;
-    
-    // Check if the requesting user can access this user's games
-    if (req.user.id !== parseInt(userId)) {
-      return next(ErrorDTO.forbidden("You can only access your own games."));
-    }
-    
-    const gameRecords = await listGameRecords(gameId);
-    
-    if (!gameRecords || gameRecords.length === 0) {
-      return next(ErrorDTO.notFound("Game not found."));
-    }
-    
-    res.json({ 
-      gameId: parseInt(gameId),
-      records: gameRecords 
-    });
-  } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to retrieve game status."));
-  }
-});
+router.post(
+  "/",
+  handleValidationErrors,
+  async (req, res, next) => {
+    try {
+      const userId = parseInt(req.user.id);
+      const createdAt = dayjs().toISOString();
 
-// PUT /api/v1/users/:userId/games/:gameId/rounds/:roundId - Submit answer for a round
-router.put('/users/:userId/games/:gameId/rounds/:roundId', async (req, res, next) => {
-  try {
-    const { userId, gameId, roundId } = req.params;
-    const { answer } = req.body;
-    
-    // Check if the requesting user can play this user's games
-    if (req.user.id !== parseInt(userId)) {
-      return next(ErrorDTO.forbidden("You can only play your own games."));
+      const game = await createNewGameWithSetup(userId, createdAt, false);
+      
+      res.status(201).json(game);
+    } catch (error) {
+      next(error);
     }
-    
-    // Validate answer
-    if (answer === undefined || answer === null) {
-      return next(ErrorDTO.badRequest("Answer is required."));
-    }
-    
-    // Create game record for this round
-    const recordId = await createGameRecord(gameId, roundId, answer);
-    
-    res.json({ 
-      roundId: parseInt(roundId),
-      answer,
-      recordId,
-      message: "Answer submitted successfully"
-    });
-  } catch (error) {
-    next(ErrorDTO.internalServerError("Failed to submit answer."));
   }
-});
+);
+
+// GET /api/v1/users/:userId/games/:gameId/draw - Get next card to be played in the game obscured
+// expected empty body, so no validators needed
+/* response:
+{
+  game: {
+    "id": 1,
+    "createdAt": "2023-10-01T12:00:00Z",
+    "roundNum": 1,
+    "isEnded": false,
+    "isDemo": false,
+    "records": []
+  },
+  "nextCard": {
+    "id": 5,
+    "name": "Card Name",
+    "imageFilename": "http://example.com/image.jpg"
+  }
+}
+
+response if game is ended:
+{
+  game: {
+    "id": 1,
+    "createdAt": "2023-10-01T12:00:00Z",
+    "roundNum": 3,
+    "isEnded": true,
+    "isDemo": false,
+    "records": []
+  },
+  nextCard: null // No next card if game is ended
+}
+*/
+router.get(
+  "/:gameId/draw",
+  validateGameId,
+  handleValidationErrors,
+  async (req, res, next) => {
+    try {
+      const { gameId } = req.params;
+      const userId = parseInt(req.user.id);
+      // Regular games: isDemo=false, userId from auth
+      const response = await handleDrawCard(gameId, false, userId);
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// PUT /api/v1/users/:userId/games/:gameId/check - Check answer for the current game round
+/*
+expected body:
+{
+  "cardsIds": [1, 2, 3, 4]
+}
+response if correct answer:
+{
+  "isCorrect": true,
+  "correctOrder": [1, 2, 3, 4]
+}
+response if incorrect answer:
+{
+  "isCorrect": false,
+  "correctOrder": [4, 3, 2, 1] 
+}
+response if user did not answer in time:
+{
+  "isCorrect": false
+}
+*/
+router.put(
+  "/:gameId/check",
+  validateGameId,
+  validateCardIds,
+  handleValidationErrors,
+  async (req, res, next) => {
+    try {
+      const { gameId } = req.params;
+      const { cardsIds } = req.body;
+      const userId = parseInt(req.user.id);
+      
+      // Regular games: isDemo=false, userId from auth
+      const response = await handleCheckAnswer(gameId, cardsIds, false, userId);
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 export default router;

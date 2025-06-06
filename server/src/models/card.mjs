@@ -5,25 +5,21 @@ export class Card {
     this.imagePath = imagePath;
     this.miseryindex = miseryindex;
   }
-}
 
-export class CardWrapper {
-  constructor(card){
-    this.card=card;
-    this.isDrawn = false;
-    this.isGuessed = undefined;
-    this.round = undefined;
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+      imageFilename: this.imagePath,
+      miseryIndex: this.miseryindex
+    };
   }
 
-  setGuessed(value){
-    this.isGuessed = value;
-  }
-
-  setDrawn(){
-    this.isDrawn = true;
-  }
-
-  setRound(value){
-    this.round = value;
+  toJSONWithoutMiseryIndex() {
+    return {
+      id: this.id,
+      name: this.name,
+      imageFilename: this.imagePath
+    };
   }
 }

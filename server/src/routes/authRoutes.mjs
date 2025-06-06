@@ -1,22 +1,40 @@
 import express from 'express';
+import passport from 'passport';
+import ErrorDTO from '../models/errors.mjs';
+import isLoggedIn from '../middleware/authMiddleware.mjs';
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
-  const { username, password } = req.body;
-  
-  // need to check the db with hash password and salt
-
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
-  }
-  
-  // Add authentication logic here
-  // This is a placeholder - implement actual authentication
-  
-  res.json({ message: 'Login successful', user: { username } });
+// POST /api/v1/auth/login
+router.post('/', passport.authenticate('local'), function(req, res) {
+  return res.json({
+    authenticated: true,
+    user: {
+      username: req.user.username,
+    },
+  });
 });
 
-// do we need to write logout ?
+// GET /api/v1/auth/current - Check if user is logged in
+router.get('/current', isLoggedIn, (req, res, next) => {
+    res.json({
+      authenticated: true,
+      user: {
+        username: req.user.username
+      }
+    });
+});
+
+// POST /api/v1/auth/logout - Logout user
+router.delete('/current', isLoggedIn, (req, res, next) => {
+  req.logout((err) => {
+    if (err) {
+      return next(ErrorDTO.internalServerError("Logout error"));
+    }
+    res.json({
+      message: "Logout successful"
+    });
+  });
+});
 
 export default router;

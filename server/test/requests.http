@@ -1,0 +1,97 @@
+
+### FLUSSO TIPICO DI ESECUZIONE ###
+### Utente: pirataarrabbiato99, Password: password ###
+
+@baseUrl = http://localhost:3001
+@username = pirataarrabbiato99
+
+### ============================================
+### FLUSSO COMPLETO - UTENTE AUTENTICATO ###
+### ============================================
+
+### 1. LOGIN - Autentica l'utente
+POST {{baseUrl}}/api/v1/sessions
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "password"
+}
+
+### 2. VERIFICA SESSIONE CORRENTE (opzionale)
+GET {{baseUrl}}/api/v1/sessions/current
+
+### 3. CREA NUOVA PARTITA NON DEMO
+POST {{baseUrl}}/api/v1/users/{{username}}/games
+Content-Type: application/json
+
+### 4. OTTIENI STORIA PARTITE (opzionale - per vedere lo stato)
+GET {{baseUrl}}/api/v1/users/{{username}}/games
+
+### 5. INIZIA PRIMO ROUND - Ottieni la prima carta
+# Sostituisci {gameId} con l'ID della partita creata al punto 3
+GET {{baseUrl}}/api/v1/users/{{username}}/games/11/draw
+
+### 6. VERIFICA RISPOSTA PRIMO ROUND
+# Sostituisci {gameId} con l'ID della partita
+# cardsIds dovrebbe contenere gli ID delle carte nell'ordine corretto (dal misery index più basso al più alto)
+PUT {{baseUrl}}/api/v1/users/{{username}}/games/11/check
+Content-Type: application/json
+
+{
+  "cardsIds": [1, 2, 3, 17]
+}
+
+### 7. INIZIA SECONDO ROUND - Ottieni la seconda carta
+GET {{baseUrl}}/api/v1/users/{{username}}/games/17/draw
+
+### 8. VERIFICA RISPOSTA SECONDO ROUND
+PUT {{baseUrl}}/api/v1/users/{{username}}/games/17/check
+Content-Type: application/json
+
+{
+  "cardsIds": [1, 2, 3, 4]
+}
+
+### 9. INIZIA TERZO ROUND - Ottieni la terza carta
+GET {{baseUrl}}/api/v1/users/{{username}}/games/1/draw
+
+### 10. VERIFICA RISPOSTA TERZO ROUND (finale)
+PUT {{baseUrl}}/api/v1/users/{{username}}/games/1/check
+Content-Type: application/json
+
+{
+  "cardsIds": [1, 2, 3, 4, 5, 6]
+}
+
+### 11. VERIFICA STATO FINALE PARTITA
+GET {{baseUrl}}/api/v1/users/{{username}}/games
+
+### 12. LOGOUT - Termina la sessione
+DELETE {{baseUrl}}/api/v1/sessions/current
+
+### ============================================
+### FLUSSO DEMO - UTENTE NON AUTENTICATO ###
+### ============================================
+
+### DEMO 1. CREA NUOVA PARTITA DEMO (senza autenticazione)
+POST {{baseUrl}}/api/v1/demos
+Content-Type: application/json
+
+### DEMO 2. INIZIA PRIMO ROUND DEMO - Ottieni la prima carta
+# Sostituisci {demoGameId} con l'ID della partita demo creata al punto DEMO 1
+GET {{baseUrl}}/api/v1/demos/10/draw
+
+### DEMO 3. VERIFICA RISPOSTA PRIMO ROUND DEMO (finale per demo)
+# Sostituisci {demoGameId} con l'ID della partita demo
+# cardsIds dovrebbe contenere gli ID delle 4 carte nell'ordine corretto (dal misery index più basso al più alto)
+PUT {{baseUrl}}/api/v1/demos/10/check
+Content-Type: application/json
+
+{
+  "cardsIds": [1, 2, 3, 4]
+}
+
+### DEMO 4. TENTATIVO DI SECONDO ROUND (dovrebbe dire che il gioco è finito)
+GET {{baseUrl}}/api/v1/demos/1/draw
+

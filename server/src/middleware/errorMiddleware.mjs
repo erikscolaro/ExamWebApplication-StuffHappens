@@ -6,8 +6,8 @@ function errorHandler(err, req, res, next) {
   }
   res.status(500).json({
     code: 500,
-    name: 'internalServerError',
-    message: err.message || 'Internal Server Error'
+    error: 'internalServerError',
+    description: err.message || 'Internal Server Error'
   });
 }
 

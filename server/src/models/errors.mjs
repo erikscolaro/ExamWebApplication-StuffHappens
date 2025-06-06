@@ -8,8 +8,8 @@ class ErrorDTO extends Error{
   toJSON(){
     return {
       code: this.code,
-      name: this.name,
-      message: this.message
+      error: this.name,
+      description: this.message
     };
   }
 
@@ -22,7 +22,7 @@ class ErrorDTO extends Error{
   }
 
   static forbidden(message) {
-    return new ErrorDTO(403, 'forbidden', message);
+    throw new ErrorDTO(403, 'forbidden', message);
   }
 
   static notFound(message) {
@@ -35,6 +35,10 @@ class ErrorDTO extends Error{
 
   static internalServerError(message) {
     return new ErrorDTO(500, 'internalServerError', message);
+  }
+
+  static serviceUnavailable(message) {
+    return new ErrorDTO(503, 'serviceUnavailable', message);
   }
 }
 
