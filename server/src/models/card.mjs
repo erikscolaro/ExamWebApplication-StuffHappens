@@ -22,4 +22,13 @@ export class Card {
       imageFilename: this.imagePath
     };
   }
+
+  fromJSON(json) {
+    return new Card(
+      json.id,
+      json.name,
+      json.imageFilename,
+      json.miseryIndex
+    );
+  }
 }

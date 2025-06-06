@@ -13,6 +13,10 @@ class ErrorDTO extends Error{
     };
   }
 
+  fromJSON(json) {
+    return new ErrorDTO(json.code, json.error, json.description);
+  }
+
   static badRequest(message) {
     return new ErrorDTO(400, 'badRequest', message);
   }

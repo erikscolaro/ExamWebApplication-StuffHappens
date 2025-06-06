@@ -9,6 +9,7 @@ export class Game {
     this.isDemo = isdemo === null ? false : Boolean(isdemo);
     this.records = records;
   }
+
   toJSON() {
     return {
       id: this.id,
@@ -18,6 +19,18 @@ export class Game {
       isDemo: this.isDemo,
       records: this.records.filter(record => this.roundNum >= record.round).map(record => record.toJSON())
     };
+  }
+
+  fromJSON(json) {
+    return new Game(
+      json.id,
+      json.userId,
+      json.createdAt,
+      json.roundNum,
+      json.isEnded,
+      json.isDemo,
+      json.records ? json.records.map(record => new GameRecord().fromJSON(record)) : []
+    );
   }
 }
 
@@ -41,5 +54,19 @@ export class GameRecord {
       wasGuessed: (this.wasGuessed !== null) ? Boolean(this.wasGuessed): null,
       timedOut: (this.timedOut !== null) ? Boolean(this.timedOut) : null,
     };
+  }
+
+  fromJSON(json) {
+    return new GameRecord(
+      json.id,
+      json.gameId,
+      json.cardId,
+      json.card ? json.card.fromJSON(json.card) : null,
+      json.round,
+      json.wasGuessed,
+      json.timedOut,
+      json.requestedAt,
+      json.respondedAt
+    );
   }
 }
