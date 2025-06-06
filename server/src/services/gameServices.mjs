@@ -76,14 +76,17 @@ export async function getUserGameHistory(userId) {
  * @param {Game} game - The game object
  * @returns {Promise<Game>} Updated game object
  */
-export async function checkAndUpdateGameEnd(game) {
+export async function checkAndUpdateGameState(game) {
   const isLastRound = (game.isDemo && game.roundNum >= CONFIG.DEMO_ROUNDS) ||
                      (!game.isDemo && game.roundNum >= CONFIG.FULL_ROUNDS);
   
   if (isLastRound) {
-    await dao.updateGame(game.id, game.roundNum, true);
     game.isEnded = true;
+  } else {
+    game.roundNum += 1;
   }
+  
+  await dao.updateGame(game.id, game.roundNum, true);
   return game;
 }
 
@@ -159,7 +162,7 @@ export async function handleDrawCard(gameId, isDemo = null, userId = null) {
     }
   }
   // 4. set game end state if needed and return if ended
-  const updatedGame = await checkAndUpdateGameEnd(game);
+  const updatedGame = await checkAndUpdateGameState(game);
   if (updatedGame.isEnded) {
     return {
       game: updatedGame.toJSON(),
@@ -167,9 +170,6 @@ export async function handleDrawCard(gameId, isDemo = null, userId = null) {
     };
   }
 
-  // 5. increment round number
-  game.roundNum += 1;
-  await dao.updateGame(game.id, game.roundNum, game.isEnded);
   // 6. Extract the card for the current round (nextCard)
   const nextCardRecord = game.records.find(record => record.round === game.roundNum);
   if (!nextCardRecord || !nextCardRecord.card) {
