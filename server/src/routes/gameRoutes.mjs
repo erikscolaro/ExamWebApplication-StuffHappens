@@ -60,7 +60,6 @@ response: game.toJSON() - the game json with first 3 cards with all details.
   ]
 }
 */
-
 router.post(
   "/",
   handleValidationErrors,
@@ -78,7 +77,7 @@ router.post(
   }
 );
 
-// GET /api/v1/users/:userId/games/:gameId/draw - Get next card to be played in the game obscured
+// POST /api/v1/users/:userId/games/:gameId/draw - Get next card to be played in the game obscured
 // expected empty body, so no validators needed
 /* response:
 {
@@ -110,7 +109,7 @@ response if game is ended:
   nextCard: null // No next card if game is ended
 }
 */
-router.get(
+router.post(
   "/:gameId/draw",
   validateGameId,
   handleValidationErrors,

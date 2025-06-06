@@ -96,7 +96,7 @@ response if demo game is ended: res.json({
   nextCard: null // No next card if game is ended
 }
 */
-router.get(
+router.post(
   "/:gameId/draw",
   validateGameId,
   handleValidationErrors,
