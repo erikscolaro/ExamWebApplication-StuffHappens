@@ -13,7 +13,7 @@ class ErrorDTO extends Error{
     };
   }
 
-  fromJSON(json) {
+  static fromJSON(json) {
     return new ErrorDTO(json.code, json.error, json.description);
   }
 

@@ -13,6 +13,10 @@ class User {
       username: this.username
     };
   }
+  
+  static fromJSON(json) {
+    return new User(json.id, json.username, json.hashPassword, json.salt);
+  }
 }
 
 export default User;

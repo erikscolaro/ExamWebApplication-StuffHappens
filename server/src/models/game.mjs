@@ -10,6 +10,14 @@ export class Game {
     this.records = records;
   }
 
+  getCardsIdsOrdered() {
+    return this.records
+      .filter(record => record.round <= this.roundNum && record.card)
+      .map(record => record.card)
+      .filter(card => card.miseryIndex !== undefined && card.miseryIndex !== null)
+      .sort((a, b) => a.miseryIndex - b.miseryIndex);
+  }
+
   toJSON() {
     return {
       id: this.id,
@@ -21,7 +29,7 @@ export class Game {
     };
   }
 
-  fromJSON(json) {
+  static fromJSON(json) {
     return new Game(
       json.id,
       json.userId,
@@ -56,7 +64,7 @@ export class GameRecord {
     };
   }
 
-  fromJSON(json) {
+  static fromJSON(json) {
     return new GameRecord(
       json.id,
       json.gameId,

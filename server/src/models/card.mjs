@@ -23,7 +23,7 @@ export class Card {
     };
   }
 
-  fromJSON(json) {
+  static fromJSON(json) {
     return new Card(
       json.id,
       json.name,
