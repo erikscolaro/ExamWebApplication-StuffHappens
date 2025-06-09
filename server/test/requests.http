@@ -22,7 +22,7 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/sessions/current
 
 ### 3. CREA NUOVA PARTITA NON DEMO
-POST {{baseUrl}}/api/v1/users/{{username}}/games
+POST {{baseUrl}}/api/v1/users/{{username}}/games/new
 Content-Type: application/json
 
 ### 4. OTTIENI STORIA PARTITE (opzionale - per vedere lo stato)
@@ -30,12 +30,13 @@ GET {{baseUrl}}/api/v1/users/{{username}}/games
 
 ### 5. INIZIA PRIMO ROUND - Ottieni la prima carta
 # Sostituisci {gameId} con l'ID della partita creata al punto 3
-GET {{baseUrl}}/api/v1/users/{{username}}/games/11/draw
+POST {{baseUrl}}/api/v1/users/{{username}}/games/11/round/1/begin
+Content-Type: application/json
 
 ### 6. VERIFICA RISPOSTA PRIMO ROUND
 # Sostituisci {gameId} con l'ID della partita
 # cardsIds dovrebbe contenere gli ID delle carte nell'ordine corretto (dal misery index più basso al più alto)
-PUT {{baseUrl}}/api/v1/users/{{username}}/games/11/check
+POST {{baseUrl}}/api/v1/users/{{username}}/games/11/round/1/verify
 Content-Type: application/json
 
 {
@@ -43,10 +44,11 @@ Content-Type: application/json
 }
 
 ### 7. INIZIA SECONDO ROUND - Ottieni la seconda carta
-GET {{baseUrl}}/api/v1/users/{{username}}/games/17/draw
+POST {{baseUrl}}/api/v1/users/{{username}}/games/17/round/2/begin
+Content-Type: application/json
 
 ### 8. VERIFICA RISPOSTA SECONDO ROUND
-PUT {{baseUrl}}/api/v1/users/{{username}}/games/17/check
+POST {{baseUrl}}/api/v1/users/{{username}}/games/17/round/2/verify
 Content-Type: application/json
 
 {
@@ -54,10 +56,11 @@ Content-Type: application/json
 }
 
 ### 9. INIZIA TERZO ROUND - Ottieni la terza carta
-GET {{baseUrl}}/api/v1/users/{{username}}/games/1/draw
+POST {{baseUrl}}/api/v1/users/{{username}}/games/1/round/3/begin
+Content-Type: application/json
 
 ### 10. VERIFICA RISPOSTA TERZO ROUND (finale)
-PUT {{baseUrl}}/api/v1/users/{{username}}/games/1/check
+POST {{baseUrl}}/api/v1/users/{{username}}/games/1/round/3/verify
 Content-Type: application/json
 
 {
@@ -80,12 +83,13 @@ Content-Type: application/json
 
 ### DEMO 2. INIZIA PRIMO ROUND DEMO - Ottieni la prima carta
 # Sostituisci {demoGameId} con l'ID della partita demo creata al punto DEMO 1
-GET {{baseUrl}}/api/v1/demos/10/draw
+POST {{baseUrl}}/api/v1/demos/10/round/1/begin
+Content-Type: application/json
 
 ### DEMO 3. VERIFICA RISPOSTA PRIMO ROUND DEMO (finale per demo)
 # Sostituisci {demoGameId} con l'ID della partita demo
 # cardsIds dovrebbe contenere gli ID delle 4 carte nell'ordine corretto (dal misery index più basso al più alto)
-PUT {{baseUrl}}/api/v1/demos/10/check
+POST {{baseUrl}}/api/v1/demos/10/round/1/verify
 Content-Type: application/json
 
 {
@@ -93,5 +97,6 @@ Content-Type: application/json
 }
 
 ### DEMO 4. TENTATIVO DI SECONDO ROUND (dovrebbe dire che il gioco è finito)
-GET {{baseUrl}}/api/v1/demos/1/draw
+POST {{baseUrl}}/api/v1/demos/1/round/2/begin
+Content-Type: application/json
 
