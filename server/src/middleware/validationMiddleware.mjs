@@ -29,6 +29,10 @@ export const validateGameId = [
   param('gameId').isInt().withMessage('Invalid gameId format'),
 ];
 
+export const validateRoundId = [
+  param('roundId').isInt().withMessage('Invalid roundId format'),
+];
+
 export const validateCardIds = [
   body('cardsIds')
     .isArray({ min: 4, max: 6 })
