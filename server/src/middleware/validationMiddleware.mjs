@@ -4,13 +4,13 @@ import ErrorDTO from "../models/errors.mjs";
 export const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    next(
+    return next(
       ErrorDTO.badRequest(
         `Validation failed: ${JSON.stringify(errors.array())}`
       )
     );
   }
-  next();
+  return next();
 };
 // custom validator to check if userId matches session
 export const validateUsernameMatchesSession = [

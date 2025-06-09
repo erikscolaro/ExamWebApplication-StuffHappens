@@ -24,9 +24,8 @@ class ErrorDTO extends Error{
   static unauthorized(message) {
     return new ErrorDTO(401, 'unauthorized', message);
   }
-
   static forbidden(message) {
-    throw new ErrorDTO(403, 'forbidden', message);
+    return new ErrorDTO(403, 'forbidden', message);
   }
 
   static notFound(message) {
