@@ -4,6 +4,7 @@ import {
   handleValidationErrors,
   validateCardIds,
   validateGameId,
+  validateRoundId,
 } from "../middleware/validationMiddleware.mjs";
 import {
   createNewGameWithSetup,
@@ -19,27 +20,14 @@ const router = express.Router();
 // POST /api/v1/demos - Create a new demo game
 // expected empty body, so no validators needed
 /*
-response: res.json(demoGame.toJSON()) - the demo game json with first card with all details.
+response: Basic demo game object without records (records are created in database but not returned)
 {
   "id": 1,
-  "userId": null,
   "createdAt": "2023-10-01T12:00:00Z",
   "roundNum": 0,
   "isEnded": false,
   "isDemo": true,
-  "records": [
-    {
-      "card": {
-        "id": 5,
-        "name": "Card Name",
-        "imageFilename": "http://example.com/image.jpg",
-        "miseryIndex": 10
-      },
-      "round": 0,
-      "wasGuessed": null,
-      "timedOut": null
-    }
-  ]
+  "records": []
 }
 */
 router.post(
@@ -58,53 +46,53 @@ router.post(
   }
 );
 
-// GET /api/v1/demos/:gameId/draw - Get next card to be played in the demo game obscured
-// expected empty body, so no validators needed
-/* response: res.json({
-  game: game.toJSON(),
-  nextCard: nextCard.toJSONWithoutMiseryIndex()
-})
+// POST /api/v1/demos/:gameId/round/:roundId/begin - Start a round and get next card for demo game
+// request: empty body (gameId and roundId in params)
+/* response: Game state with filtered records + next card without misery index
 {
-  game: {
+  "game": {
     "id": 1,
     "createdAt": "2023-10-01T12:00:00Z",
     "roundNum": 1,
     "isEnded": false,
     "isDemo": true,
-    "records": []
+    "records": [
+      // Only cards from previous rounds where timedOut = false
+      {
+        "card": {
+          "id": 5,
+          "name": "Card Name",
+          "imageFilename": "image5.jpg",
+          "miseryIndex": 10
+        },
+        "round": 0,
+        "wasGuessed": true,
+        "timedOut": false
+      }
+      // ... other cards from round < current roundNum where timedOut = false
+    ]
   },
   "nextCard": {
-    "id": 5,
-    "name": "Card Name",
-    "imageFilename": "http://example.com/image.jpg"
+    "id": 8,
+    "name": "Next Card Name",
+    "imageFilename": "image8.jpg"
+    // Note: no miseryIndex included
   }
 }
 
-response if demo game is ended: res.json({
-  game: game.toJSON(),
-  nextCard: null
-})
-{
-  game: {
-    "id": 1,
-    "createdAt": "2023-10-01T12:00:00Z",
-    "roundNum": 1,
-    "isEnded": true,
-    "isDemo": true,
-    "records": []
-  },
-  nextCard: null // No next card if game is ended
-}
+response if demo game is ended:
+Returns an error status indicating the game has already ended
 */
 router.post(
-  "/:gameId/draw",
+  "/:gameId/round/:roundId/begin",
   validateGameId,
+  validateRoundId,
   handleValidationErrors,
   async (req, res, next) => {
     try {
-      const { gameId } = req.params;
+      const { gameId, roundId } = req.params;
       // Demo games: isDemo=true, userId=null
-      const response = await handleDrawCard(gameId, true, null);
+      const response = await handleDrawCard(gameId, roundId, true, null);
       res.status(200).json(response);
     } catch (error) {
       next(error);
@@ -112,39 +100,44 @@ router.post(
   }
 );
 
-// PUT /api/v1/demos/:gameId/check - Check answer for the current demo game round
+// POST /api/v1/demos/:gameId/round/:roundId/verify - Submit answer for current demo game round
 /*
-expected body:
+request body:
 {
-  "cardsIds": [1, 2, 3, 4]
+  "cardsIds": [1, 2, 3, 4]  // Array of card IDs in user's chosen order
 }
+
 response if correct answer:
 {
   "isCorrect": true,
-  "correctOrder": [1, 2, 3, 4]
+  "correctOrder": [1, 2, 3, 4]  // Cards sorted by misery index (ascending)
 }
+
 response if incorrect answer:
 {
   "isCorrect": false,
-  "correctOrder": [4, 3, 2, 1] 
+  "correctOrder": [3, 1, 4, 2]  // Correct order sorted by misery index (ascending)
 }
-response if user did not answer in time:
+
+response if user did not answer in time (timeout):
 {
   "isCorrect": false
+  // Note: no correctOrder provided for timeout
 }
 */
-router.put(
-  "/:gameId/check",
+router.post(
+  "/:gameId/round/:roundId/verify",
   validateGameId,
+  validateRoundId,
   validateCardIds,
   handleValidationErrors,
   async (req, res, next) => {
     try {
-      const { gameId } = req.params;
+      const { gameId, roundId } = req.params;
       const { cardsIds } = req.body;
       
       // Demo games: isDemo=true, userId=null
-      const response = await handleCheckAnswer(gameId, cardsIds, true, null);
+      const response = await handleCheckAnswer(gameId, cardsIds, roundId, true, null);
       res.status(200).json(response);
     } catch (error) {
       next(error);
