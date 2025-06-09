@@ -293,20 +293,24 @@ export const updateGameRecord = (recordId, wasGuessed, timedOut, requestedAt, re
  */
 export const getGameWithRecordsAndCards = async (gameId) => {
   try {
-    const game = await getGameById(gameId);
-    if (!game) return null; // Game not found
+    const [game, records, cards] = await Promise.all([
+      getGameById(gameId),
+      getGameRecordsByGameId(gameId),
+      getCards()
+    ]);
 
-    const records = await getGameRecordsByGameId(gameId);
-    const cards = await getCards();
+    if (!game) return null; 
+
+    const cardMap = new Map(cards.map(card => [card.id, card]));
 
     records.forEach((record) => {
-      const card = cards.find((card) => card.id == record.cardId);
+      const card = cardMap.get(record.cardId);
       if (card) {
-        record.card = card; // Attach the card object to the record
+        record.card = card; 
       }
     });
 
-    game.records = records; // Attach records to the game object
+    game.records = records;
     return game;
   } catch (error) {
     throw error;
