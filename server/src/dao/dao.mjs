@@ -1,10 +1,10 @@
-import sqlite from 'sqlite3'
-import crypto from 'crypto';
-import CONFIG from '../config/config.mjs';
-import User from '../models/user.mjs';
-import { Card } from '../models/card.mjs';
-import { Game, GameRecord } from '../models/game.mjs';
-import {Buffer} from 'buffer';
+import sqlite from "sqlite3";
+import crypto from "crypto";
+import CONFIG from "../config/config.mjs";
+import User from "../models/user.mjs";
+import { Card } from "../models/card.mjs";
+import { Game, GameRecord } from "../models/game.mjs";
+import { Buffer } from "buffer";
 
 // open the database
 const db = new sqlite.Database(CONFIG.DB_NAME, (err) => {
@@ -26,20 +26,30 @@ export const getUserByUsername = (username, password) => {
     db.get(query, [username], (err, row) => {
       if (err) reject(err);
       else if (row === undefined) resolve(false); // for passport authentication
-      else {        
-        const user = new User(row.ID, row.USERNAME, row.HASHEDPASSWORD, row.SALT);
+      else {
+        const user = new User(
+          row.ID,
+          row.USERNAME,
+          row.HASHEDPASSWORD,
+          row.SALT
+        );
         const salt = Buffer.from(row.SALT, "hex");
-        crypto.scrypt(password, salt , CONFIG.HASHED_PASSWORD_KEY_LENGTH, function(err, hashedPassword) {
-          if (err) reject(err);
-          
-          console.log('DB Hash length:', row.HASHEDPASSWORD.length);
-          console.log('DB Hash:', row.HASHEDPASSWORD);
-          console.log('Calculated Hash length:', hashedPassword.toString('hex').length);
-          console.log('Calculated Hash:', hashedPassword.toString('hex'));
-          
-          if (!crypto.timingSafeEqual(Buffer.from(row.HASHEDPASSWORD, 'hex'), hashedPassword)) resolve(false);
-          else resolve(user);
-        });
+        crypto.scrypt(
+          password,
+          salt,
+          CONFIG.HASHED_PASSWORD_KEY_LENGTH,
+          function (err, hashedPassword) {
+            if (err) reject(err);
+            if (
+              !crypto.timingSafeEqual(
+                Buffer.from(row.HASHEDPASSWORD, "hex"),
+                hashedPassword
+              )
+            )
+              resolve(false);
+            else resolve(user);
+          }
+        );
       }
     });
   });
@@ -55,13 +65,24 @@ export const getUserByUsername = (username, password) => {
  * @throws {Error} Errori database
  */
 export const getGamesByUser = (userid, areEnded = true) => {
-  return new Promise((resolve, reject)=> {
-    const query = "SELECT * FROM GAMES WHERE USERID = ? AND ISENDED = ? ORDER BY CREATEDAT DESC";
-    db.all(query, [userid, areEnded?1:0], (err, rows) => {
+  return new Promise((resolve, reject) => {
+    const query =
+      "SELECT * FROM GAMES WHERE USERID = ? AND ISENDED = ? ORDER BY CREATEDAT DESC";
+    db.all(query, [userid, areEnded ? 1 : 0], (err, rows) => {
       if (err) reject(err); // error management done outside
       else {
         // Convert rows to GameDB objects
-        const games = rows.map(row => new Game(row.ID, row.USERID, row.CREATEDAT, row.ROUND, row.ISENDED, row.ISDEMO));
+        const games = rows.map(
+          (row) =>
+            new Game(
+              row.ID,
+              row.USERID,
+              row.CREATEDAT,
+              row.ROUND,
+              row.ISENDED,
+              row.ISDEMO
+            )
+        );
         resolve(games);
       }
     });
@@ -77,15 +98,20 @@ export const getGamesByUser = (userid, areEnded = true) => {
  * @throws {Error} Errori database
  */
 export const createGame = (userId, createdAt, isDemo) => {
-  return new Promise((resolve, reject)=> {
-    const query = "INSERT INTO GAMES (USERID, CREATEDAT, ROUND, ISENDED, ISDEMO) VALUES (?, ?, ?, ?, ?)";
+  return new Promise((resolve, reject) => {
+    const query =
+      "INSERT INTO GAMES (USERID, CREATEDAT, ROUND, ISENDED, ISDEMO) VALUES (?, ?, ?, ?, ?)";
     const userIdValue = isDemo ? null : userId;
-    db.run(query, [userIdValue, createdAt, 0, 0, isDemo?1:0], function(err) {
-      if (err) reject(err); // error management done outside
-      else {
-        resolve(this.lastID);
+    db.run(
+      query,
+      [userIdValue, createdAt, 1, 0, isDemo ? 1 : 0],
+      function (err) {
+        if (err) reject(err); // error management done outside
+        else {
+          resolve(this.lastID);
+        }
       }
-    });
+    );
   });
 };
 
@@ -98,9 +124,9 @@ export const createGame = (userId, createdAt, isDemo) => {
  * @throws {Error} Errori database
  */
 export const updateGame = (gameId, roundNum, isEnded) => {
-  return new Promise((resolve, reject)=> {
+  return new Promise((resolve, reject) => {
     const query = "UPDATE GAMES SET ROUND = ?, ISENDED = ? WHERE ID = ?";
-    db.run(query, [roundNum, isEnded?1:0, gameId], function(err) {
+    db.run(query, [roundNum, isEnded ? 1 : 0, gameId], function (err) {
       if (err) reject(err);
       else {
         resolve(this.changes);
@@ -122,7 +148,14 @@ export const getGameById = (gameId) => {
       if (err) reject(err);
       else if (row === undefined) resolve(false);
       else {
-        const game = new Game(row.ID, row.USERID, row.CREATEDAT, row.ROUND, row.ISENDED, row.ISDEMO);
+        const game = new Game(
+          row.ID,
+          row.USERID,
+          row.CREATEDAT,
+          row.ROUND,
+          row.ISENDED,
+          row.ISDEMO
+        );
         resolve(game);
       }
     });
@@ -137,13 +170,15 @@ export const getGameById = (gameId) => {
  * @throws {Error} Errori database
  */
 export const getCards = () => {
-  return new Promise((resolve, reject)=> {
+  return new Promise((resolve, reject) => {
     const query = "SELECT * FROM CARDS";
     db.all(query, [], (err, rows) => {
       if (err) reject(err); // error management done outside
       else {
         // Convert rows to Card objects
-        const cards = rows.map(row => new Card(row.ID, row.NAME, row.IMAGEPATH, row.MISERYINDEX));
+        const cards = rows.map(
+          (row) => new Card(row.ID, row.NAME, row.IMAGEPATH, row.MISERYINDEX)
+        );
         resolve(cards);
       }
     });
@@ -157,7 +192,7 @@ export const getCards = () => {
  * @throws {Error} Errori database
  */
 export const getCardById = (cardId) => {
-  return new Promise((resolve, reject)=> {
+  return new Promise((resolve, reject) => {
     const query = "SELECT * FROM CARDS WHERE ID = ?";
     db.get(query, [cardId], (err, row) => {
       if (err) reject(err); // error management done outside
@@ -179,7 +214,7 @@ export const getCardById = (cardId) => {
  * @throws {Error} Errori database
  */
 export const getGameRecordsByGameId = (gameId) => {
-  return new Promise((resolve, reject)=> {
+  return new Promise((resolve, reject) => {
     const query = "SELECT * FROM GAME_RECORDS WHERE GAMEID = ?";
     db.all(query, [gameId], (err, rows) => {
       if (err) reject(err); // error management done outside
@@ -213,7 +248,7 @@ export const getGameRecordsByGameId = (gameId) => {
  * @throws {Error} Errori database
  */
 export const getGameRecordByGameIdAndRound = (gameId, round) => {
-  return new Promise((resolve, reject)=> {
+  return new Promise((resolve, reject) => {
     const query = "SELECT * FROM GAME_RECORDS WHERE GAMEID = ? AND ROUND = ?";
     db.get(query, [gameId, round], (err, row) => {
       if (err) reject(err); // error management done outside
@@ -233,7 +268,7 @@ export const getGameRecordByGameIdAndRound = (gameId, round) => {
       }
     });
   });
-}
+};
 
 /**
  * Crea un nuovo record di gioco
@@ -246,10 +281,19 @@ export const getGameRecordByGameIdAndRound = (gameId, round) => {
  * @returns {Promise<number>} ID del nuovo record creato
  * @throws {Error} Errori database
  */
-export const createGameRecord = (gameId, cardId, round=0, wasGuessed= null, timedOut = null, requestedAt = null, respondedAt = null) => {
-  return new Promise((resolve, reject)=> {
+export const createGameRecord = (
+  gameId,
+  cardId,
+  round = 0,
+  wasGuessed = null,
+  timedOut = null,
+  requestedAt = null,
+  respondedAt = null
+) => {
+  return new Promise((resolve, reject) => {
     const query =
-      "INSERT INTO GAME_RECORDS (GAMEID, CARDID, ROUND, WASGUESSED, TIMEDOUT,REQUESTEDAT, RESPONDEDAT) VALUES (?, ?, ?, ?, ?, ?, ?)";    db.run(
+      "INSERT INTO GAME_RECORDS (GAMEID, CARDID, ROUND, WASGUESSED, TIMEDOUT,REQUESTEDAT, RESPONDEDAT) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    db.run(
       query,
       [gameId, cardId, round, wasGuessed, timedOut, requestedAt, respondedAt],
       function (err) {
@@ -271,17 +315,28 @@ export const createGameRecord = (gameId, cardId, round=0, wasGuessed= null, time
  * @returns {Promise<number>} Numero di righe modificate
  * @throws {Error} Errori database
  */
-export const updateGameRecord = (recordId, wasGuessed, timedOut, requestedAt, respondedAt) => {
-  return new Promise((resolve, reject)=> {
-    const query = "UPDATE GAME_RECORDS SET WASGUESSED = ?, TIMEDOUT = ?, REQUESTEDAT = ?, RESPONDEDAT = ? WHERE ID = ?";
-    db.run(query, [wasGuessed, timedOut, requestedAt, respondedAt, recordId], function(err) {
-      if (err) reject(err);
-      else {
-        resolve(this.changes);
+export const updateGameRecord = (
+  recordId,
+  wasGuessed,
+  timedOut,
+  requestedAt,
+  respondedAt
+) => {
+  return new Promise((resolve, reject) => {
+    const query =
+      "UPDATE GAME_RECORDS SET WASGUESSED = ?, TIMEDOUT = ?, REQUESTEDAT = ?, RESPONDEDAT = ? WHERE ID = ?";
+    db.run(
+      query,
+      [wasGuessed, timedOut, requestedAt, respondedAt, recordId],
+      function (err) {
+        if (err) reject(err);
+        else {
+          resolve(this.changes);
+        }
       }
-    });
+    );
   });
-}
+};
 
 //COMPLEX QUERIES
 
@@ -296,17 +351,17 @@ export const getGameWithRecordsAndCards = async (gameId) => {
     const [game, records, cards] = await Promise.all([
       getGameById(gameId),
       getGameRecordsByGameId(gameId),
-      getCards()
+      getCards(),
     ]);
 
-    if (!game) return null; 
+    if (!game) return null;
 
-    const cardMap = new Map(cards.map(card => [card.id, card]));
+    const cardMap = new Map(cards.map((card) => [card.id, card]));
 
     records.forEach((record) => {
       const card = cardMap.get(record.cardId);
       if (card) {
-        record.card = card; 
+        record.card = card;
       }
     });
 
@@ -315,7 +370,7 @@ export const getGameWithRecordsAndCards = async (gameId) => {
   } catch (error) {
     throw error;
   }
-}
+};
 
 /**
  * Ottiene tutti i giochi di un utente con record e carte complete (query composita)
@@ -330,15 +385,15 @@ export const getGamesWithRecordsAndCards = async (userid) => {
 
     await Promise.all(
       games.map(async (game) => {
-      const records = await getGameRecordsByGameId(game.id);        
-      records.forEach((record) => {
-        const card = cards.find((card) => card.id == record.cardId);
-        if (card) {
-        record.card = card; // Attach the card object to the record
-        }
-      });
-      game.records = records; // Attach records to the game object
-      return game;
+        const records = await getGameRecordsByGameId(game.id);
+        records.forEach((record) => {
+          const card = cards.find((card) => card.id == record.cardId);
+          if (card) {
+            record.card = card; // Attach the card object to the record
+          }
+        });
+        game.records = records; // Attach records to the game object
+        return game;
       })
     );
 

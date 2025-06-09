@@ -38,13 +38,13 @@ export async function createNewGameWithSetup(
   createdAt,
   isDemo = false
 ) {
-  // 1. Create game with initial state round 0 and not ended
+  // Create game with initial state round 0 and not ended
   const gameId = await dao.createGame(userId, createdAt, isDemo);
 
-  // 2. Generate random cards and create records
+  // Generate random cards and create records
   const cardIds = generateUniqueCardIds(isDemo ? 4 : 6, CONFIG.CARDS_NUMBER);
 
-  // 3. Create game records
+  // Create game records
   await Promise.all(
     cardIds.map((cardId, index) => {
       const roundNumber = index < 3 ? 0 : index - 2;
@@ -60,7 +60,7 @@ export async function createNewGameWithSetup(
     })
   );
 
-  // 4. Get complete game state
+  // Get complete game state with updated round number
   const game = await dao.getGameById(gameId);
   if (!game) {
     throw ErrorDTO.internalServerError(
@@ -68,6 +68,7 @@ export async function createNewGameWithSetup(
     );
   }
 
+  // Return basic game object without records for API response (use toJSON method)
   return game;
 }
 
@@ -93,7 +94,7 @@ export async function checkAndUpdateGameState(game) {
     game.roundNum += 1;
   }
 
-  await dao.updateGame(game.id, game.roundNum, true);
+  await dao.updateGame(game.id, game.roundNum, game.isEnded);
   return game;
 }
 
@@ -114,23 +115,15 @@ export function evaluateUserAnswer(game, userAnswer) {
     .sort((a, b) => a.miseryIndex - b.miseryIndex)
     .map((card) => card.id);
 
-  // Compare arrays
+  // Compare arrays and return result
   const isCorrect =
     correctOrderedIds.length === userAnswer.length &&
     correctOrderedIds.every((id, index) => id === userAnswer[index]);
-  if (isCorrect) {
-    // User answer is correct
-    return {
-      isCorrect: true,
-      correctOrder: correctOrderedIds,
-    };
-  } else {
-    // User answer is incorrect
-    return {
-      isCorrect: false,
-      correctOrder: correctOrderedIds,
-    };
-  }
+
+  return {
+    isCorrect,
+    correctOrder: correctOrderedIds,
+  };
 }
 
 /**
@@ -190,7 +183,7 @@ export async function handleDrawCard(
   // Check if the game is in a valid state to draw a card
   if (game.isEnded) {
     throw ErrorDTO.badRequest(`Game with ID ${gameId} has already ended`);
-  } else if (game.roundNum !== roundId) {
+  } else if (parseInt(game.roundNum) != parseInt(roundId)) {
     throw ErrorDTO.badRequest(
       `Game with ID ${gameId} is not in round ${roundId}`
     );
@@ -252,7 +245,7 @@ export async function handleCheckAnswer(
   const game = await validateGameAccess(gameId, isDemo, userId);
 
   // Check if the game is in the correct round and not ended
-  if (game.roundNum !== roundId) {
+  if (game.roundNum != roundId) {
     throw ErrorDTO.badRequest(`Game ${gameId} is not in round ${roundId}`);
   }
   if (game.isEnded) {
@@ -282,8 +275,9 @@ export async function handleCheckAnswer(
     currentRecord.wasGuessed = false;
     currentRecord.timedOut = true;
   } else {
-    response = evaluateUserAnswer(game, cardsIds);
+    // this order is important!!! do not modify
     currentRecord.timedOut = false;
+    response = evaluateUserAnswer(game, cardsIds);
     currentRecord.wasGuessed = response.isCorrect;
   }
 
@@ -297,7 +291,14 @@ export async function handleCheckAnswer(
   );
 
   // Update game state if needed
-  await checkAndUpdateGameState(game);
+  response.game = await checkAndUpdateGameState(game);
+  if (!response.game.isEnded) response.game.roundNum -= 1;
+  // only to send the correct number to client
+
+  // Filter records in game: round < game.roundNum && timedOut = false
+  game.records = game.records.filter(
+    (record) => record.round <= game.roundNum && record.timedOut === false
+  );
 
   return response;
 }

@@ -17,7 +17,7 @@ const router = express.Router();
 
 // =================== ROUTE HANDLERS ===================
 
-// POST /api/v1/demos - Create a new demo game
+// POST /api/v1/demos/new - Create a new demo game
 // expected empty body, so no validators needed
 /*
 response: Basic demo game object without records (records are created in database but not returned)
@@ -31,7 +31,7 @@ response: Basic demo game object without records (records are created in databas
 }
 */
 router.post(
-  "/",
+  "/new",
   handleValidationErrors,
   async (req, res, next) => {
     try {
