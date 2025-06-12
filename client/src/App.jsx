@@ -1,24 +1,20 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useState, useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router";
+import { Routes, Route, Navigate, Outlet } from "react-router";
 import API from "./api/api.mjs";
 
-// Layout Components (to be created)
+// Layout Components
 import DefaultLayout from "./components/DefaultLayout";
-import LoginForm from "./components/LoginForm";
-import NotFound from "./components/NotFound";
+import NotFound from "./components/NotFound.jsx";
 
-// Game Components (to be created)
-import HomePage from "./components/HomePage";
-/*
-import DemoGamePage from "./components/DemoGamePage";
-import GamesHistoryPage from "./components/GameHistoryPage";
-import PlayGamePage from "./components/PlayGame";
-*/
+// Game Components
+import HomePage from "./components/HomePage.jsx";
+import { LoginForm } from "./components/AuthComponents.jsx";
+import GamePage from "./components/game-page/GamePage.jsx";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
 
   // Check if user is already logged in on app start
@@ -32,7 +28,7 @@ function App() {
         setLoggedIn(false);
       }
     };
-    
+
     checkUserSession();
   }, []);
 
@@ -40,38 +36,64 @@ function App() {
     try {
       const userResponse = await API.logIn(credentials);
       setLoggedIn(true);
-      setMessage({msg: `Welcome, ${userResponse.user.username}!`, type: 'success'});
+      setMessage({
+        msg: `Benvenuto, ${userResponse.user.username}!`,
+        type: "success",
+      });
       setUser(userResponse.user);
-    } catch(err) {
-      setMessage({msg: err, type: 'danger'});
+    } catch (err) {
+      setMessage({ msg: err, type: "danger" });
     }
   };
-
   const handleLogout = async () => {
     try {
       await API.logOut();
       setLoggedIn(false);
       setUser(null);
-      setMessage({msg: 'Logged out successfully', type: 'info'});
+      setMessage({ msg: "Logout effettuato con successo!", type: "info" });
     } catch {
-      setMessage({msg: 'Error during logout', type: 'danger'});
+      setMessage({ msg: "Errore durante il logout", type: "danger" });
     }
   };
 
   return (
     <Routes>
-      <Route element={ <DefaultLayout loggedIn={loggedIn} handleLogout={handleLogout} message={message} setMessage={setMessage} user={user} /> } >
+      <Route
+        element={
+          <DefaultLayout
+            loggedIn={loggedIn}
+            handleLogin={handleLogin}
+            handleLogout={handleLogout}
+            message={message}
+            setMessage={setMessage}
+            user={user}
+          />
+        }
+      >
         {/* Home Page, instructions + demo button */}
-        <Route path="/" element={ <HomePage loggedIn={loggedIn} /> } />
-        
+        <Route path="/" element={<HomePage loggedIn={loggedIn} />} />
+        {/* Demo Game Page */}
+        <Route path="/demo" />
         {/* Authentication Routes */}
-        <Route path='/login' element={loggedIn ? <Navigate replace to='/' /> : <LoginForm handleLogin={handleLogin} />} />
-        
-        <Route path="*" element={ <NotFound /> } />
+        <Route
+          path="/login"
+          element={
+            loggedIn ? (
+              <Navigate replace to="/" />
+            ) : (
+              <LoginForm handleLogin={handleLogin} />
+            )
+          }
+        />
+
+        {/* Protected Routes */}
+        <Route path="/play" element={<GamePage user={user} />} />
+        {/*<Route path="/profile" element={<ProfilePage user={user} />} />*/}
+
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
-  )
-
+  );
 }
 
-export default App
+export default App;

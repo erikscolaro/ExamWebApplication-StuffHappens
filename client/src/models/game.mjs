@@ -1,4 +1,6 @@
 // Simple models for database rows
+import { Card } from "./card.mjs";
+
 export class Game {
   constructor(id, userid, createdat, roundNum, isended, isdemo, records = []) {
     this.id = id;
@@ -28,7 +30,7 @@ export class Game {
       records: this.records.filter(record => this.roundNum >= record.round).map(record => record.toJSON())
     };
   }
-
+  
   static fromJSON(json) {
     return new Game(
       json.id,
@@ -37,7 +39,7 @@ export class Game {
       json.roundNum,
       json.isEnded,
       json.isDemo,
-      json.records ? json.records.map(record => new GameRecord().fromJSON(record)) : []
+      json.records ? json.records.map(record => GameRecord.fromJSON(record)) : []
     );
   }
 }
@@ -63,13 +65,12 @@ export class GameRecord {
       timedOut: (this.timedOut !== null) ? Boolean(this.timedOut) : null,
     };
   }
-
   static fromJSON(json) {
     return new GameRecord(
       json.id,
       json.gameId,
       json.cardId,
-      json.card ? json.card.fromJSON(json.card) : null,
+      json.card ? Card.fromJSON(json.card) : null,
       json.round,
       json.wasGuessed,
       json.timedOut,

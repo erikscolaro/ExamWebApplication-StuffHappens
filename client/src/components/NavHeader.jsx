@@ -1,31 +1,46 @@
-import { useEffect, useState } from 'react';
-import { Button, Container, Navbar } from 'react-bootstrap';
+import { Button, Container, Navbar } from "react-bootstrap";
 import { Link } from "react-router";
-import { LogoutButton } from './AuthComponents';
+import { colors } from "../colors.mjs";
+import CustomButton from "./shared/CustomButton";
 
 function NavHeader(props) {
-  const [darkMode, setDarkMode] = useState(false);
+  return (
+    <Navbar
+      className="px-2 py-0 m-0"
+      style={{
+        backgroundColor: colors.background.accent,
+        borderRadius: "9999px",
+        border: `0px solid ${colors.border.accentDark}`,
+        boxShadow: `0 0px 80px ${colors.border.accentDark}`,
+        width: "100%",
+        maxWidth: "1800px",
+      }}
+    >
+      <Container
+        fluid
+        className="d-flex justify-content-between align-items-center"
+      >
+        <Link
+          to="/"
+          className="navbar-brand"
+          style={{
+            color: colors.text.dark,
+            fontSize: "2rem",
+            fontFamily: "'Bangers', cursive",
+          }}
+        >
+          Shit Happens
+        </Link>
 
-  useEffect(() => {
-    // se darkMode === true, aggiungiamo data-bs-theme al tag html
-    if(darkMode)
-      document.documentElement.setAttribute("data-bs-theme", "dark");
-    // altrimenti, rimuoviamo data-bs-theme
-    else
-      document.documentElement.removeAttribute("data-bs-theme");
-  }, [darkMode]);
-
-  return(
-    <Navbar bg='primary' data-bs-theme='dark'>
-      <Container fluid>
-      <Link to="/" className="navbar-brand">HeapOverrun</Link>
-      <Button onClick={() => setDarkMode(oldMode => !oldMode)}>
-        { darkMode ? <i className="bi bi-sun-fill" /> : <i className="bi bi-moon-fill" />}
-      </Button>
-      {props.loggedIn ? 
-        <LogoutButton logout={props.handleLogout} /> :
-        <Link to='/login'className='btn btn-outline-light'>Login</Link>
-      }
+        {props.loggedIn ? (
+          <CustomButton
+            linkTo={""}
+            label="Logout"
+            onClick={props.handleLogout}
+          />
+        ) : (
+          <CustomButton linkTo={"login"} label="Login" />
+        )}
       </Container>
     </Navbar>
   );
