@@ -28,7 +28,7 @@ Content-Type: application/json
 
 
 ###
-@gameid = 38
+@gameid = 43
 
 ### 4. OTTIENI STORIA PARTITE (opzionale - per vedere lo stato)
 GET {{baseUrl}}/api/v1/users/{{username}}/games

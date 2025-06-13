@@ -61,12 +61,20 @@ export async function createNewGameWithSetup(
   );
 
   // Get complete game state with updated round number
-  const game = await dao.getGameById(gameId);
+  const game = await dao.getGameWithRecordsAndCards(gameId);
   if (!game) {
     throw ErrorDTO.internalServerError(
       `Failed to create game with ID ${gameId}`
     );
   }
+
+  // Filter records to only include those from round 0
+  // as requested by requirements
+  game.records = game.records.filter(
+    (record) => record.round === 0
+  );
+
+  game.roundNum = 0; // only for the client to know the game is not started yet
 
   // Return basic game object without records for API response (use toJSON method)
   return game;
@@ -106,7 +114,7 @@ export async function checkAndUpdateGameState(game) {
  */
 export function evaluateUserAnswer(game, userAnswer) {
   const validRecords = game.records.filter(
-    (record) => record.timedOut === false && record.round <= game.roundNum
+    (record) => record.wasGuessed === true && record.round <= game.roundNum
   );
 
   // Map records to cards, sort by misery index ascending, then map to card IDs
@@ -121,8 +129,7 @@ export function evaluateUserAnswer(game, userAnswer) {
     correctOrderedIds.every((id, index) => id === userAnswer[index]);
 
   return {
-    isCorrect,
-    correctOrder: correctOrderedIds,
+    isCorrect
   };
 }
 
@@ -200,18 +207,20 @@ export async function handleDrawCard(
   }
   const nextCard = nextCardRecord.card;
 
-  // Update next card record with drawn datetime
-  await dao.updateGameRecord(
-    nextCardRecord.id,
-    null,
-    null,
-    dayjs().toISOString(),
-    null
-  );
+  // Update next card record with drawn datetime only if it was not drawn before
+  if (nextCardRecord.requestedAt=== null) {
+    await dao.updateGameRecord(
+      nextCardRecord.id,
+      null,
+      null,
+      dayjs().toISOString(),
+      null
+    );
+  }
 
   // Filter records in game: round < game.roundNum && timedOut = false
   game.records = game.records.filter(
-    (record) => record.round < game.roundNum && record.timedOut === false
+    (record) => record.round < game.roundNum && record.wasGuessed === true
   );
 
   // Prepare response with game state and next card
@@ -265,7 +274,10 @@ export async function handleCheckAnswer(
     );
   }
 
-  currentRecord.respondedAt = respondedAt.toISOString();
+  if (currentRecord.respondedAt=== null) {
+    currentRecord.respondedAt = respondedAt.toISOString();
+  }
+  
   const isTimedOut =
     dayjs(currentRecord.respondedAt).diff(dayjs(currentRecord.requestedAt)) >
     CONFIG.MAX_RESPONSE_TIME;
@@ -291,14 +303,7 @@ export async function handleCheckAnswer(
   );
 
   // Update game state if needed
-  response.game = await checkAndUpdateGameState(game);
-  if (!response.game.isEnded) response.game.roundNum -= 1;
-  // only to send the correct number to client
-
-  // Filter records in game: round < game.roundNum && timedOut = false
-  game.records = game.records.filter(
-    (record) => record.round <= game.roundNum && record.timedOut === false
-  );
+  await checkAndUpdateGameState(game);
 
   return response;
 }

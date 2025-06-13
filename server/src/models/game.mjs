@@ -37,7 +37,7 @@ export class Game {
       json.roundNum,
       json.isEnded,
       json.isDemo,
-      json.records ? json.records.map(record => new GameRecord().fromJSON(record)) : []
+      json.records ? json.records.map(record => GameRecord().fromJSON(record)) : []
     );
   }
 }

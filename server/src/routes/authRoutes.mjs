@@ -11,6 +11,7 @@ router.post('/', passport.authenticate('local'), function(req, res) {
     authenticated: true,
     user: {
       username: req.user.username,
+      id: req.user.id
     },
   });
 });
@@ -20,7 +21,8 @@ router.get('/current', isLoggedIn, (req, res, next) => {
     res.json({
       authenticated: true,
       user: {
-        username: req.user.username
+        username: req.user.username,
+        id: req.user.id
       }
     });
 });
