@@ -7,7 +7,9 @@ const GRAY_400 = "rgba(200, 204, 208, 1)";
 const GRAY_500 = "rgba(160, 165, 170, 1)";
 const GRAY_600 = "rgba(120, 125, 130, 1)";
 const GRAY_700 = "rgba(80, 85, 90, 1)";
+const GRA7_750 = "rgba(60, 65, 70, 1)";
 const GRAY_800 = "rgba(40, 45, 50, 1)";
+const GRAY_850 = "rgba(30, 34, 38, 1)";
 const GRAY_900 = "rgba(20, 24, 28, 1)";
 const BLACK = "rgba(0, 0, 0, 1)";
 const TRANSPARENT = "rgba(0, 0, 0, 0)";
@@ -29,7 +31,9 @@ export const colors = {
     gray_500: GRAY_500,
     gray_600: GRAY_600,
     gray_700: GRAY_700,
+    gray_750: GRA7_750,
     gray_800: GRAY_800,
+    gray_850: GRAY_850,
     gray_900: GRAY_900,
     black: BLACK,
     accent: ACCENT,
@@ -48,6 +52,8 @@ export const colors = {
     transparent: TRANSPARENT,
     accent: ACCENT,
     accentDark: ACCENT_DARK,
+    accentTransparent: ACCENT_TRANSPARENT,
+    accentDarkTransparent: ACCENT_DARK_TRANSPARENT,
     light: GRAY_200,
     dark: GRAY_900,
   },

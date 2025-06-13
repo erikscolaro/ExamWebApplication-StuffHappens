@@ -31,7 +31,7 @@ function DefaultLayout(props) {
         />
         <Container
           fluid
-          className="d-flex flex-column align-items-center justify-content-center"
+          className="d-flex flex-column align-items-center justify-content-center p-2 pt-5"
           style={{
             backgroundColor: colors.background.gray_900,
             width: "100%",
