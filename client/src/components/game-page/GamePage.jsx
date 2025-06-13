@@ -212,14 +212,17 @@ function NewCardArea(props) {
       style={{
         position: "relative",
       }}
-    >      <Row 
+    >
+      {" "}
+      <Row
         style={{
-          borderRadius: "30px",
+          borderRadius: "22px",
           backgroundColor: colors.background.transparent,
-          border: `1px solid ${colors.border.accent}`,
           boxShadow: `
-            0 0 40px ${colors.background.accentTransparent}
+            0 0 40px ${colors.background.accentTransparent},
+            0 0 20px ${colors.background.accentTransparent}
           `,
+          height: "300px",
           position: "relative",
           overflow: "hidden",
         }}
