@@ -8,8 +8,8 @@ import {
   Row,
 } from "react-bootstrap";
 import { Link, useLocation } from "react-router";
-import { colors } from "../colors.mjs";
-import CustomButton from "./shared/CustomButton";
+import { colors } from "../../colors.mjs";
+import CustomButton from "./CustomButton";
 
 function NavHeader(props) {
   let page = useLocation().pathname;
@@ -36,7 +36,7 @@ function NavHeader(props) {
           maxWidth: "1800px",
         }}
       >
-        <Col className="d-flex align-items-center nowrap">
+        <Col className="d-flex align-items-center nowrap gap-2">
         <Navbar.Brand
           href="/"
           className="navbar-brand"

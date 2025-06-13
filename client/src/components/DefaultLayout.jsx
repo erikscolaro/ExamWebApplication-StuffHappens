@@ -1,6 +1,6 @@
 import { Col, Container, Row } from "react-bootstrap";
 import { Outlet } from "react-router";
-import NavHeader from "./NavHeader";
+import NavHeader from "./shared/NavHeader";
 import { colors } from "../colors.mjs";
 import CustomAlert from "./shared/CustomAlert";
 
@@ -37,11 +37,10 @@ function DefaultLayout(props) {
             width: "100%",
             height: "100%",
             borderRadius: "20px",
-            overflowY: "scrpll",
+            overflowY: "auto",
             maxWidth: "1800px",
             scrollbarWidth: "thin",
             scrollbarColor: `${colors.background.accentTransparent} transparent`,
-
           }}
         >
           <Outlet />

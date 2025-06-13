@@ -5,12 +5,12 @@ import API from "./api/api.mjs";
 
 // Layout Components
 import DefaultLayout from "./components/DefaultLayout";
-import NotFound from "./components/NotFound.jsx";
+import NotFound from "./components/shared/NotFound.jsx";
 
 // Game Components
 import HomePage from "./components/HomePage.jsx";
-import { LoginForm } from "./components/AuthComponents.jsx";
 import GamePage from "./components/game-page/GamePage.jsx";
+import { LoginForm } from "./components/shared/AuthComponents.jsx";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);

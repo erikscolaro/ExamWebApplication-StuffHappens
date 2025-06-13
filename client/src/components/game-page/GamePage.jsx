@@ -109,7 +109,7 @@ function CardsArea({ cards }) {
             overflowY: "hidden",
             flexWrap: "nowrap",
             scrollbarWidth: "thin",
-            scrollbarColor: `${colors.background.gray_700} transparent`,
+            scrollbarColor: `${colors.background.accentDarkTransparent} transparent`,
           }}
         >
           {cards.map((card) => (

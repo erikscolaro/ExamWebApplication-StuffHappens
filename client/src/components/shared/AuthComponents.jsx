@@ -8,8 +8,8 @@ import {
   Card,
   Container,
 } from "react-bootstrap";
-import { colors } from "../colors.mjs";
-import CustomButton from "./shared/CustomButton";
+import CustomButton from "./CustomButton";
+import { colors } from "../../colors.mjs";
 
 function LoginForm(props) {
   const [state, formAction, isPending] = useActionState(loginFunction, {
@@ -22,7 +22,6 @@ function LoginForm(props) {
       username: formData.get("username"),
       password: formData.get("password"),
     };
-
     try {
       await props.handleLogin(credentials);
       return { success: true };
