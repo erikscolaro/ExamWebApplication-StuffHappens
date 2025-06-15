@@ -1,5 +1,6 @@
 import { Card } from "react-bootstrap";
 import { colors } from "../../colors.mjs";
+import { useState } from "react";
 
 /**
  * CustomCard component renders a styled card displaying game card information
@@ -23,28 +24,49 @@ import { colors } from "../../colors.mjs";
  * <CustomCard card={cardData} />
  */
 function CustomCard({ card, placeholder = false, children }) {
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
     <Card
       id={placeholder ? undefined : card.id}
-      style={{
-        borderRadius: "22px",
-        padding: "10px",
-        width: "220px",
-        height: "300px",
-        overflow: "hidden",
-        boxShadow: "0px 4px 8px " + colors.background.gray_800,
-        backgroundColor: colors.background.gray_800,
-        borderColor: colors.background.gray_700,
-        marginBottom: "8px",
-      }}
+      style={
+        placeholder
+          ? {
+              width: "220px",
+              height: "300px",
+              backgroundColor: colors.background.transparent,
+              borderColor: colors.background.transparent,
+            }
+          : {
+              borderRadius: "22px",
+              padding: "10px",
+              width: "220px",
+              height: "300px",
+              overflow: "hidden",
+              boxShadow: "0px 4px 8px " + colors.background.gray_800,
+              backgroundColor: colors.background.gray_800,
+              borderColor: colors.background.gray_700,
+              marginBottom: "8px",
+            }
+      }
     >
       {placeholder ? (
         children
       ) : (
         <>
+          {" "}
           <Card.Img
             variant="top"
-            src={card.imageFilename ? `${card.imageFilename}` : "default.png"}
+            src={
+              imageError || !card.imageFilename
+                ? "default.png"
+                : card.imageFilename
+            }
+            onError={handleImageError}
             style={{
               width: "200px",
               height: "200px",
@@ -60,7 +82,7 @@ function CustomCard({ card, placeholder = false, children }) {
               textAlign: "right",
               height: "fit-content",
             }}
-            >
+          >
             <p
               style={{
                 color: colors.background.gray_900,

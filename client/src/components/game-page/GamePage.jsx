@@ -1,156 +1,280 @@
-import { Card, Col, Container, Row } from "react-bootstrap";
+import { Col, Container, Modal, Row } from "react-bootstrap";
 import CustomCard from "./CustomCard";
-import { Game } from "../../models/game.mjs";
-import { Card as CardModel } from "../../models/card.mjs";
 import { colors } from "../../colors.mjs";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CustomButton from "../shared/CustomButton";
+import API from "../../api/api.mjs";
 
-export default function GamePage() {
-  const gametest = {
-    id: 35,
-    createdAt: "2025-06-09T18:49:16.292Z",
-    roundNum: 0,
-    isEnded: false,
-    isDemo: false,
-    records: [
-      {
-        card: {
-          id: 24,
-          name: "Card 24",
-          imageFilename: "default.png",
-          miseryIndex: 1000,
-        },
-        round: 0,
-        wasGuessed: true,
-        timedOut: false,
-      },
-      {
-        card: {
-          id: 41,
-          name: "Card 41",
-          imageFilename: "default.png",
-          miseryIndex: 4,
-        },
-        round: 0,
-        wasGuessed: false,
-        timedOut: false,
-      },
-      {
-        card: {
-          id: 42,
-          name: "Card 42",
-          imageFilename: "default.png",
-          miseryIndex: 5,
-        },
-        round: 0,
-        wasGuessed: false,
-        timedOut: false,
-      },
-    ],
-  };
-  const nextCard = {
-    id: 43,
-    name: "Card 43",
-    imageFilename: "default.png",
-  };
-  const game = Game.fromJSON(gametest);
-  console.log("Game object:", game);
-  const cards = game.getCardsIdsOrdered();
-  console.log("Ordered cards:", cards);
-  const card = CardModel.fromJSON(nextCard);
-  console.log("Next card:", card);
+export default function GamePage({ isLogged, user }) {
+  console.log("GamePage props:", { isLogged, user });
+
+  const [game, setGame] = useState(null);
+  const [roundCurrent, setRoundCurrent] = useState(0);
+  const [nextCard, setNextCard] = useState(null);
+  const [answer] = useState([1, 2, 3, 4]); // setAnswer not used
+
+  // modal management
+  const [showModal, setShowModal] = useState(false);
+  const [roundResult, setRoundResult] = useState(null);
 
   // timer management
   const [countdownKey, setCountdownKey] = useState(0); // Key to force re-render of the timer when needed
-  const [isPlaying, setIsPlaying] = useState(true); // Timer state
+  const [isPlaying, setIsPlaying] = useState(false); // Timer state - starts paused
 
   const startTimer = () => {
     setCountdownKey((prevKey) => prevKey + 1); // Increment key to force re-render
     setIsPlaying(true); // Start the timer
   };
 
-  const sendAPICall = () => {
-    // Simulate an API call to send the current game state
-    console.log("Sending game state to server...");
-    // Here you would typically use fetch or axios to send the data
-  };
-
-  const handleCountdownComplete = () => {
+  const handleCountdownComplete = async () => {
     console.log("Countdown completed!");
-    // Handle the countdown completion logic here
+
+    await sendAnswer(); // Send answer when countdown completes
+
+    setShowModal(true); // Show modal when countdown completes
+
     return {
       shouldRepeat: false, // Set to true if you want the timer to repeat
       delay: 0, // Delay before the next countdown starts
     };
   };
 
-  // useeffect for debug
-  useState(() => {
-    startTimer(); // Start the timer when the component mounts
-    console.log("GamePage mounted");
-    console.log("Cards:", cards);
-    console.log("Next card:", card);
-  }, []);
+  // Initialize game when component mounts or user changes
+  useEffect(() => {
+    const initializeGame = async () => {
+      console.log("Initializing game...");
+      try {
+        let result = null;
+        console.log(
+          "User logged in initialize game=:",
+          isLogged,
+          "User data:",
+          user
+        );
+        if (isLogged) {
+          result = await API.createGame(user.id);
+        } else {
+          result = await API.createDemoGame();
+        }
+        setGame(result);
+      } catch (error) {
+        console.error("Error initializing game:", error);
+        throw error;
+      }
+    };
+
+    initializeGame();
+  }, [user, isLogged]);
+
+  // Fetch next round when roundCurrent changes
+  useEffect(() => {
+    const fetchNextRound = async () => {
+      console.log("Fetching next round...");
+      try {
+        let result = null;
+        console.log("current round:", roundCurrent);
+        if (isLogged) {
+          result = await API.nextRoundGame(user.id, game.id, roundCurrent);
+        } else {
+          result = await API.nextRoundDemo(game.id, roundCurrent);
+        }
+        setGame(result.game);
+        setNextCard(result.nextCard);
+        console.log("Next card fetched:", result.nextCard);
+        startTimer(); // Start the timer for the new round
+      } catch (error) {
+        console.error("Error fetching next round:", error);
+        throw error;
+      }
+    };
+
+    if (!game || !roundCurrent || roundCurrent == game.roundNum) return;
+    // manage here the case where game is ended.
+    console.log("Round changed, fetching next round...");
+    fetchNextRound();
+  }, [roundCurrent, game, isLogged, user]);
+
+  const sendAnswer = async () => {
+    console.log("Sending answer for round:", roundCurrent);
+    setIsPlaying(false); // Stop the timer when sending answer
+    console.log("Answer to send:", answer);
+    try {
+      let result = null;
+      if (isLogged) {
+        result = await API.checkAnswerGame(
+          user.id,
+          game.id,
+          roundCurrent,
+          answer
+        );
+      } else {
+        result = await API.checkAnswerDemo(game.id, roundCurrent, answer);
+      }
+      console.log("Answer sent successfully:", result);
+      setRoundResult(result);
+      setShowModal(true); // Show modal with result
+    } catch (error) {
+      console.error("Error sending answer:", error);
+    }
+  };
+
+  // Loading animation while game is being fetched
+  if (!game) {
+    return (
+      <Container
+        fluid
+        className="d-flex justify-content-center align-items-center"
+        style={{
+          height: "100vh",
+          backgroundColor: colors.background.primary,
+        }}
+      >
+        <div className="spinner-border text-light" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </Container>
+    );
+  }
+
+  console.log("Game state:", game);
+  console.log("Round current:", roundCurrent);
+  console.log("Next card:", nextCard);
 
   return (
-    <Container
-      fluid
-      className="d-flex p-3 flex-column justify-content-between"
-      style={{
-        height: "100%",
-      }}
-    >
-      <Row className="justify-content-between align-items-center">
-        <Col>
-          <CountdownTimer
-            key={countdownKey}
-            isPlaying={isPlaying}
-            onComplete={handleCountdownComplete}
-          />
-        </Col>
-        <Col className="text-center">
-          <div
-            style={{
-              padding: "15px 25px",
-              marginBottom: "15px",
+    <>
+      <CustomModal
+        show={showModal}
+        title={`Risultato Round ${game.roundNum}`}
+        body={
+          showModal && roundResult.isCorrect ? (
+            <div>
+              🎉 Grande! Hai risposto correttamente!
+              <br />
+              Continua così, sei sulla strada giusta.
+              <br />
+              Premi "Continua" per affrontare il prossimo round.
+            </div>
+          ) : (
+            <div>
+              😢 Ops! Risposta sbagliata.
+              <br />
+              Nel prossimo round non vedrai la carta che hai giocato.
+              <br />
+              Premi "Continua" per riprovarci!
+            </div>
+          )
+        }
+        footer={
+          <CustomButton
+            label="Continua"
+            onClick={() => {
+              setShowModal(false);
+              setRoundCurrent((roundCurrent) => roundCurrent + 1); // Move to the next round
             }}
-          >
-            <h2 
-              style={{ 
-                color: colors.background.white,
-                fontFamily: "'Bangers', sans-serif",
-                fontSize: "3rem",
-                margin: 0,
-                textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
-                letterSpacing: "1px",
+          />
+        }
+        isBlocking={true}
+        onHide={() => setShowModal(false)}
+      />
+      <Container
+        fluid
+        className="d-flex p-3 flex-column justify-content-between"
+        style={{
+          height: "100%",
+        }}
+      >
+        <Row className="justify-content-between align-items-center">
+          <Col>
+            {" "}
+            <CountdownTimer
+              key={countdownKey}
+              resetKey={countdownKey}
+              isPlaying={isPlaying}
+              onComplete={handleCountdownComplete}
+            />
+          </Col>
+          <Col className="text-center">
+            <div
+              style={{
+                padding: "15px 25px",
+                marginBottom: "15px",
               }}
             >
-              ROUND {gametest.roundNum + 1}
-            </h2>
-          </div>
-          <div 
-            style={{ 
-              transition: "transform 0.2s ease",
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-            onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-          >
-            <CustomButton
-              label="Invia soluzione"
-              onClick={sendAPICall}
-              variant="primary"
-            />
-          </div>
-        </Col>
-        <Col>
-          <NewCardArea card={card} />
-        </Col>
-      </Row>
-      <CardsArea cards={cards} />
-    </Container>
+              <h2
+                style={{
+                  color: colors.background.white,
+                  fontFamily: "'Bangers', sans-serif",
+                  fontSize: "3rem",
+                  margin: 0,
+                  textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+                  letterSpacing: "1px",
+                }}
+              >
+                {game.roundNum === 0 ? "READY ?" : `ROUND ${game.roundNum}`}
+              </h2>
+            </div>
+            <div
+              style={{
+                transition: "transform 0.2s ease",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.transform = "scale(1.05)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.transform = "scale(1)")
+              }
+            >
+              
+              <CustomButton
+                label={game.roundNum === 0 ? "Start Game" : "Invia soluzione"}
+                onClick={async () => {
+                  if (game.roundNum === 0) {
+                    setRoundCurrent(1); // Start the first round
+                  } else {
+                    await sendAnswer(); // Send the answer for the current round
+                  }
+                }}
+                variant="primary"
+              />
+            </div>
+          </Col>
+          <Col>
+            <NewCardArea card={nextCard} />
+          </Col>
+        </Row>
+        <CardsArea cards={game.getCardsIdsOrdered()} />
+      </Container>
+    </>
+  );
+}
+
+function CustomModal({ show, title, body, footer, isBlocking = true, onHide }) {
+  const style = {
+    background: colors.background.gray_800,
+    color: colors.text.light,
+    border: `1px solid ${colors.background.gray_700}`,
+  };
+  return (
+    <Modal
+      show={show}
+      onHide={isBlocking ? () => {} : onHide}
+      centered
+      backdrop={isBlocking ? "static" : true}
+      keyboard={!isBlocking}
+      style={{
+        backgroundColor: colors.background.darkTransparent,
+      }}
+    >
+      {title && (
+        <Modal.Header style={style} closeButton={!isBlocking}>
+          <Modal.Title>{title}</Modal.Title>
+        </Modal.Header>
+      )}
+      {body && <Modal.Body style={style}>{body}</Modal.Body>}
+      {footer && <Modal.Footer style={style}>{footer}</Modal.Footer>}
+    </Modal>
   );
 }
 
@@ -223,14 +347,16 @@ function NewCardArea(props) {
             0 0 20px ${colors.background.accentTransparent}
           `,
           height: "300px",
+          width: "220px",
           position: "relative",
           overflow: "hidden",
         }}
       >
+        {" "}
         {props.card == null ? (
-          <CustomCard card={props.card} />
+          <></>
         ) : (
-          <CustomCard placeholder={true} />
+          <CustomCard card={props.card} />
         )}
       </Row>
       <Row
@@ -251,7 +377,7 @@ function NewCardArea(props) {
   );
 }
 
-function CountdownTimer({ key, isPlaying, onComplete }) {
+function CountdownTimer({ resetKey, isPlaying, onComplete }) {
   return (
     <Container
       fluid
@@ -266,10 +392,11 @@ function CountdownTimer({ key, isPlaying, onComplete }) {
         backgroundColor: colors.background.gray_800,
       }}
     >
+      {" "}
       <CountdownCircleTimer
         isPlaying={isPlaying}
         duration={30}
-        key={key}
+        key={resetKey}
         onComplete={onComplete}
         colors={colors.background.accent}
         size={175}

@@ -2,10 +2,10 @@
 import { Card } from "./card.mjs";
 
 export class Game {
-  constructor(id, userid, createdat, roundNum, isended, isdemo, records = []) {
+  constructor(id, userid, createdAt, roundNum, isended, isdemo, records = []) {
     this.id = id;
     this.userid = userid;
-    this.createdat = createdat;
+    this.createdAt = createdAt;
     this.roundNum = roundNum;
     this.isEnded = isended === null ? false : Boolean(isended);
     this.isDemo = isdemo === null ? false : Boolean(isdemo);
@@ -23,7 +23,7 @@ export class Game {
   toJSON() {
     return {
       id: this.id,
-      createdAt: this.createdat,
+      createdAt: this.createdAt,
       roundNum: this.roundNum,
       isEnded: this.isEnded,
       isDemo: this.isDemo,

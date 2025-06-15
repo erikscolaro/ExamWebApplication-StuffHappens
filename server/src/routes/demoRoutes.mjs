@@ -1,5 +1,5 @@
-import express from 'express';
-import ErrorDTO from '../models/errors.mjs';
+import express from "express";
+import ErrorDTO from "../models/errors.mjs";
 import {
   handleValidationErrors,
   validateCardIds,
@@ -9,7 +9,7 @@ import {
 import {
   createNewGameWithSetup,
   handleDrawCard,
-  handleCheckAnswer
+  handleCheckAnswer,
 } from "../services/gameServices.mjs";
 import dayjs from "dayjs";
 
@@ -30,21 +30,17 @@ response: Basic demo game object without records (records are created in databas
   "records": []
 }
 */
-router.post(
-  "/new",
-  handleValidationErrors,
-  async (req, res, next) => {
-    try {
-      const createdAt = dayjs().toISOString();
-      // For demo games, userId is null and isDemo is true
-      const demoGame = await createNewGameWithSetup(null, createdAt, true);
-      
-      res.status(201).json(demoGame);
-    } catch (error) {
-      next(error);
-    }
+router.post("/new", handleValidationErrors, async (req, res, next) => {
+  try {
+    const createdAt = dayjs().toISOString();
+    // For demo games, userId is null and isDemo is true
+    const demoGame = await createNewGameWithSetup(null, createdAt, true);
+
+    res.status(201).json(demoGame);
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 // POST /api/v1/demos/:gameId/round/:roundId/begin - Start a round and get next card for demo game
 // request: empty body (gameId and roundId in params)
@@ -135,9 +131,15 @@ router.post(
     try {
       const { gameId, roundId } = req.params;
       const { cardsIds } = req.body;
-      
+
       // Demo games: isDemo=true, userId=null
-      const response = await handleCheckAnswer(gameId, cardsIds, roundId, true, null);
+      const response = await handleCheckAnswer(
+        gameId,
+        cardsIds,
+        roundId,
+        true,
+        null
+      );
       res.status(200).json(response);
     } catch (error) {
       next(error);

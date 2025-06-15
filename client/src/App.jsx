@@ -11,6 +11,7 @@ import NotFound from "./components/shared/NotFound.jsx";
 import HomePage from "./components/HomePage.jsx";
 import GamePage from "./components/game-page/GamePage.jsx";
 import { LoginForm } from "./components/shared/AuthComponents.jsx";
+import HistoryPage from "./components/history-page/HistoryPage.jsx";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -70,11 +71,8 @@ function App() {
           />
         }
       >
-        {/* Home Page, instructions + demo button */}
         <Route path="/" element={<HomePage loggedIn={loggedIn} />} />
-        {/* Demo Game Page */}
-        <Route path="/demo" />
-        {/* Authentication Routes */}
+
         <Route
           path="/login"
           element={
@@ -87,8 +85,20 @@ function App() {
         />
 
         {/* Protected Routes */}
-        <Route path="/play" element={<GamePage user={user} />} />
-        {/*<Route path="/profile" element={<ProfilePage user={user} />} />*/}
+        <Route
+          path="/play"
+          element={<GamePage user={user} isLogged={loggedIn} />}
+        />        <Route
+          path="/demo"
+          element={<GamePage isLogged={false} />}
+        />
+        
+        <Route 
+          path="/history" 
+          element={
+              <HistoryPage user={user} />
+          } 
+        />
 
         <Route path="*" element={<NotFound />} />
       </Route>

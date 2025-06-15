@@ -14,13 +14,14 @@ export const handleValidationErrors = (req, res, next) => {
 };
 // custom validator to check if userId matches session
 export const validateUsernameMatchesSession = [
-  param("userId").isAlphanumeric().withMessage("Invalid userId format")
-    .isLength({ min: 1 }).withMessage("userId cannot be empty")
-    .customSanitizer((value) => value.trim()) // sanitize input
+  param("userId").isInt().withMessage("Invalid userId format")
     .custom((value, { req }) => {
-    if (value !== req.user.username) {
+    console.log("Validating userId:", value, "against req.user.id:", req.user.id);
+    if (parseInt(value) !== parseInt(req.user.id)) {
+      console.log("Validation FAILED: userId mismatch");
       throw ErrorDTO.forbidden("User ID does not match session user ID");
     }
+    console.log("Validation PASSED");
     return true;
   }),
 ];
