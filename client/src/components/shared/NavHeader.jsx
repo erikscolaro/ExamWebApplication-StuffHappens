@@ -63,7 +63,7 @@ function NavHeader(props) {
             {props.loggedIn ? (
               <>
                 <Nav.Link href="/play">Gioca</Nav.Link>
-                <Nav.Link href="/hystory">Cronologia</Nav.Link>
+                <Nav.Link href="/history">Cronologia</Nav.Link>
               </>
             ) : (
               <Nav.Link href="/demo">Demo</Nav.Link>
