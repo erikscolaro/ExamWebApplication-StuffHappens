@@ -12,6 +12,7 @@ const GRAY_800 = "rgba(40, 45, 50, 1)";
 const GRAY_850 = "rgba(30, 34, 38, 1)";
 const GRAY_900 = "rgba(20, 24, 28, 1)";
 const BLACK = "rgba(0, 0, 0, 1)";
+const DARK_TRANSPARENT = "rgba(0, 0, 0, 0.60)"; // Assuming this is the intended value
 const TRANSPARENT = "rgba(0, 0, 0, 0)";
 const ACCENT2 = "rgba(252, 198, 3, 1)";
 const ACCENT = "rgba(255, 163, 26,1)";
@@ -36,6 +37,7 @@ export const colors = {
     gray_850: GRAY_850,
     gray_900: GRAY_900,
     black: BLACK,
+    darkTransparent: DARK_TRANSPARENT,
     accent: ACCENT,
     accentDark: ACCENT_DARK,
     accentTransparent: ACCENT_TRANSPARENT,
@@ -56,5 +58,9 @@ export const colors = {
     accentDarkTransparent: ACCENT_DARK_TRANSPARENT,
     light: GRAY_200,
     dark: GRAY_900,
+  },
+  logic: {
+    success: "rgba(40, 167, 69, 1)" ,
+    error: "rgba(220, 53, 69, 1)",
   },
 };
