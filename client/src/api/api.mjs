@@ -1,8 +1,31 @@
 import { Game } from "../models/game.mjs";
+import { Card } from "../models/card.mjs";
+import User from "../models/user.mjs";
+import ErrorDTO from "../models/errors.mjs";
 
 const SERVER_URL = "http://localhost:3001";
 
-// ricorda di dover gestire meglio gli erorri in qualche modo
+// Helper function to handle API errors consistently
+const handleApiError = (response) => {
+  if (response.ok) {
+    return response.json();
+  }
+
+  return response
+    .json()
+    .then((errorData) => {
+      if (errorData.code && errorData.error && errorData.description) {
+        throw ErrorDTO.fromJSON(errorData);
+      } else {
+        throw new Error(errorData.message || "Internal server error");
+      }
+    })
+    .catch(() => {
+      throw new Error(
+        `Server error: ${response.status} ${response.statusText}`
+      );
+    });
+};
 
 // =================== DEMO API CALLS ===================
 /**
@@ -12,17 +35,15 @@ const SERVER_URL = "http://localhost:3001";
  * @async
  * @function createDemoGame
  * @returns {Promise<Game>} A promise that resolves to the created demo game object
- * @throws {Error} Throws an error with message "Internal server error" if the request fails
+ * @throws {ErrorDTO} Throws structured error from server
  */
 const createDemoGame = async () => {
-  const response = await fetch(SERVER_URL + "/api/v1/demos", {
+  const response = await fetch(`${SERVER_URL}/api/v1/demos/new`, {
     method: "POST",
   });
 
-  if (response.ok) {
-    const gameJson = await response.json();
-    return Game.fromJSON(gameJson);
-  } else throw new Error("Internal server error");
+  const data = await handleApiError(response);
+  return Game.fromJSON(data);
 };
 
 /**
@@ -31,38 +52,41 @@ const createDemoGame = async () => {
  * @async
  * @function nextRoundDemo
  * @param {string} gameId - The unique identifier of the demo game
- * @return {Promise<Game>} A promise that resolves to the updated demo game object
- * @throws {Error} Throws an error with message "Internal server error" if the request fails
+ * @param {string} roundId - The unique identifier of the round
+ * @return {Promise<{game: Game, nextCard: Card}>} A promise that resolves to the updated demo game object and next card (without misery index)
+ * @throws {ErrorDTO} Throws structured error from server
  * */
-const nextRoundDemo = async (gameId) => {
+const nextRoundDemo = async (gameId, roundId) => {
   const response = await fetch(
-    SERVER_URL + "/api/v1/demos/" + gameId + "/draw",
+    `${SERVER_URL}/api/v1/demos/${gameId}/round/${roundId}/begin`,
     {
       method: "POST",
     }
   );
 
-  if (response.ok) {
-    const gameJson = await response.json();
-    return Game.fromJSON(gameJson);
-  } else throw new Error("Internal server error");
+  const data = await handleApiError(response);
+  return {
+    game: Game.fromJSON(data.game),
+    nextCard: Card.fromJSON(data.nextCard),
+  };
 };
 
 /**
  * Saves the user's answer for a demo game round by submitting selected card IDs.
- * This function sends a PUT request to check the user's answer against the correct solution.
+ * This function sends a POST request to check the user's answer against the correct solution.
  * @async
- * @function saveAnswerDemo
+ * @function checkAnswerDemo
  * @param {string} gameId - The unique identifier of the demo game
+ * @param {string} roundId - The unique identifier of the round
  * @param {string[]} cardIds - Array of card IDs representing the user's answer
- * @return {Promise<Game>} A promise that resolves to the updated demo game object with results
- * @throws {Error} Throws an error with message "Internal server error" if the request fails
+ * @return {Promise<{isCorrect: boolean, correctOrder?: number[]}>} A promise that resolves to the answer verification result
+ * @throws {ErrorDTO} Throws structured error from server
  */
-const saveAnswerDemo = async (gameId, cardIds) => {
+const checkAnswerDemo = async (gameId, roundId, cardIds) => {
   const response = await fetch(
-    SERVER_URL + "/api/v1/demos/" + gameId + "/check",
+    `${SERVER_URL}/api/v1/demos/${gameId}/round/${roundId}/verify`,
     {
-      method: "PUT",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
@@ -72,60 +96,49 @@ const saveAnswerDemo = async (gameId, cardIds) => {
     }
   );
 
-  if (response.ok) {
-    const gameJson = await response.json();
-    return Game.fromJSON(gameJson);
-  } else throw new Error("Internal server error");
-}
+  return await handleApiError(response);
+};
 
 // =================== FULL GAME API CALLS ===================
 
 /**
- * Retrieves the games history from the server for a specific user.
- * Makes a GET request to fetch all historical game records for the specified user.
+ * Retrieves the games history from the server for the authenticated user.
+ * Makes a GET request to fetch all historical game records for the current user.
  *
  * @async
  * @function getGamesHistory
- * @param {string} userId - The unique identifier of the user whose games history to retrieve
  * @returns {Promise<Game[]>} A promise that resolves to an array of Game objects containing game history data
- * @throws {Error} Throws an error with message "Internal server error" if the request fails
+ * @throws {ErrorDTO} Throws structured error from server
  */
 const getGamesHistory = async (userId) => {
-  const response = await fetch(
-    SERVER_URL + "/api/v1/users/" + userId + "/games",
-    {
-      method: "GET",
-      credentials: "include",
-    }
-  );
-  if (response.ok) {
-    const gamesJson = await response.json();
-    return gamesJson.map((g) => Game.fromJSON(g));
-  } else throw new Error("Internal server error");
+  const response = await fetch(`${SERVER_URL}/api/v1/users/${userId}/games`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  const data = await handleApiError(response);
+  return data.history.map((g) => Game.fromJSON(g));
 };
 
 /**
- * Creates a new game for the specified user by sending a POST request to the server.
+ * Creates a new game for the authenticated user by sending a POST request to the server.
  *
  * @async
- * @function createNewGame
- * @param {string} userId - The unique identifier of the user creating the game
+ * @function createGame
  * @returns {Promise<Game>} A promise that resolves to the created game object from the server response
- * @throws {Error} Throws an error with message "Internal server error" if the request fails
+ * @throws {ErrorDTO} Throws structured error from server
  */
 const createGame = async (userId) => {
   const response = await fetch(
-    SERVER_URL + "/api/v1/users/" + userId + "/games",
+    `${SERVER_URL}/api/v1/users/${userId}/games/new`,
     {
       method: "POST",
       credentials: "include",
     }
   );
 
-  if (response.ok) {
-    const gameJson = await response.json();
-    return Game.fromJSON(gameJson);
-  } else throw new Error("Internal server error");
+  const data = await handleApiError(response);
+  return Game.fromJSON(data);
 };
 
 /**
@@ -134,57 +147,55 @@ const createGame = async (userId) => {
  *
  * @async
  * @function nextRoundGame
- * @param {string} userId - The unique identifier of the user
  * @param {string} gameId - The unique identifier of the game
- * @returns {Promise<Game>} A promise that resolves to the updated game object
- * @throws {Error} Throws an error with message "Internal server error" if the request fails
+ * @param {string} roundId - The unique identifier of the round
+ * @returns {Promise<{game: Game, nextCard: Card}>} A promise that resolves to the updated game object and next card (without misery index)
+ * @throws {ErrorDTO} Throws structured error from server
  */
-const nextRoundGame = async (userId, gameId) => {
+const nextRoundGame = async (userId, gameId, roundId) => {
   const response = await fetch(
-    SERVER_URL + "/api/v1/users/" + userId + "/games/" + gameId + "/draw",
+    `${SERVER_URL}/api/v1/users/${userId}/games/${gameId}/round/${roundId}/begin`,
     {
       method: "POST",
       credentials: "include",
     }
   );
 
-  if (response.ok) {
-    const gameJson = await response.json();
-    return Game.fromJSON(gameJson);
-  } else throw new Error("Internal server error");
+  const data = await handleApiError(response);
+  return {
+    game: Game.fromJSON(data.game),
+    nextCard: Card.fromJSON(data.nextCard),
+  };
 };
 
 /**
  * Saves the user's answer for a game round by submitting selected card IDs.
- * Makes a PUT request to check the user's answer against the correct solution.
+ * Makes a POST request to check the user's answer against the correct solution.
  *
  * @async
- * @function saveAnswer
- * @param {string} userId - The unique identifier of the user
+ * @function checkAnswerGame
  * @param {string} gameId - The unique identifier of the game
+ * @param {string} roundId - The unique identifier of the round
  * @param {string[]} cardIds - Array of card IDs representing the user's answer
- * @returns {Promise<Game>} A promise that resolves to the updated game object with results
- * @throws {Error} Throws an error with message "Internal server error" if the request fails
+ * @returns {Promise<{isCorrect: boolean, correctOrder?: number[]}>} A promise that resolves to the answer verification result
+ * @throws {ErrorDTO} Throws structured error from server
  */
-const saveAnswer = async (userId, gameId, cardIds) => {
+const checkAnswerGame = async (userId, gameId, roundId, cardIds) => {
   const response = await fetch(
-    SERVER_URL + "/api/v1/users/" + userId + "/games/" + gameId + "/check",
+    `${SERVER_URL}/api/v1/users/${userId}/games/${gameId}/round/${roundId}/verify`,
     {
-      method: "PUT",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: {
+      body: JSON.stringify({
         cardsIds: cardIds,
-      },
+      }),
     }
   );
 
-  if (response.ok) {
-    const gameJson = await response.json();
-    return Game.fromJSON(gameJson);
-  } else throw new Error("Internal server error");
+  return await handleApiError(response);
 };
 
 /**
@@ -194,13 +205,11 @@ const saveAnswer = async (userId, gameId, cardIds) => {
  * @async
  * @function logIn
  * @param {Object} credentials - The user's login credentials
- * @param {string} credentials.username - The user's username
- * @param {string} credentials.password - The user's password
- * @returns {Promise<Object>} A promise that resolves to the authenticated user object
- * @throws {string} Throws error details as a string if authentication fails
+ * @returns {Promise<{authenticated: boolean, user: User}>} A promise that resolves to authentication status and user object
+ * @throws {ErrorDTO} Throws structured error from server
  */
 const logIn = async (credentials) => {
-  const response = await fetch(SERVER_URL + "/api/v1/sessions", {
+  const response = await fetch(`${SERVER_URL}/api/v1/sessions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -208,13 +217,12 @@ const logIn = async (credentials) => {
     credentials: "include",
     body: JSON.stringify(credentials),
   });
-  if (response.ok) {
-    const user = await response.json();
-    return user;
-  } else {
-    const errDetails = await response.text();
-    throw errDetails;
-  }
+
+  const data = await handleApiError(response);
+  return {
+    authenticated: data.authenticated,
+    user: User.fromJSON(data.user),
+  };
 };
 
 /**
@@ -223,19 +231,19 @@ const logIn = async (credentials) => {
  *
  * @async
  * @function getUserInfo
- * @returns {Promise<Object>} A promise that resolves to the current user's information
- * @throws {Object} Throws the error response object if the request fails
+ * @returns {Promise<{authenticated: boolean, user: User}>} A promise that resolves to authentication status and user object
+ * @throws {ErrorDTO} Throws structured error from server
  */
 const getUserInfo = async () => {
-  const response = await fetch(SERVER_URL + "/api/v1/sessions/current", {
+  const response = await fetch(`${SERVER_URL}/api/v1/sessions/current`, {
     credentials: "include",
   });
-  const user = await response.json();
-  if (response.ok) {
-    return user;
-  } else {
-    throw user;
-  }
+
+  const data = await handleApiError(response);
+  return {
+    authenticated: data.authenticated,
+    user: User.fromJSON(data.user),
+  };
 };
 
 /**
@@ -244,23 +252,29 @@ const getUserInfo = async () => {
  *
  * @async
  * @function logOut
- * @returns {Promise<null>} A promise that resolves to null upon successful logout
+ * @returns {Promise<Object>} A promise that resolves to logout confirmation
+ * @throws {ErrorDTO} Throws structured error from server
  */
 const logOut = async () => {
-  const response = await fetch(SERVER_URL + "/api/v1/sessions/current", {
+  const response = await fetch(`${SERVER_URL}/api/v1/sessions/current`, {
     method: "DELETE",
     credentials: "include",
   });
-  if (response.ok) return null;
+
+  return await handleApiError(response);
 };
 
 const API = {
+  createDemoGame,
+  nextRoundDemo,
+  checkAnswerDemo,
   getGamesHistory,
   createGame,
   nextRoundGame,
-  saveAnswer,
+  checkAnswerGame,
   logIn,
   getUserInfo,
   logOut,
 };
+
 export default API;
