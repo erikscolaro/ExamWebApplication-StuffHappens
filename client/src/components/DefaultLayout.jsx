@@ -8,11 +8,8 @@ function DefaultLayout(props) {
   return (
     <>
       {props.message && props.message.msg && (
-        <CustomAlert
-          message={props.message}
-          setMessage={props.setMessage}
-        />
-      )}
+        <CustomAlert message={props.message} setMessage={props.setMessage} />
+      )}{" "}
       <Container
         fluid
         className="d-flex flex-column align-items-center p-3 gap-3"
@@ -31,11 +28,11 @@ function DefaultLayout(props) {
         />
         <Container
           fluid
-          className="d-flex flex-column align-items-center justify-content-center p-2 pt-5"
+          className="d-flex flex-column align-items-center p-2 pt-3"
           style={{
             backgroundColor: colors.background.gray_900,
             width: "100%",
-            height: "100%",
+            minHeight: "calc(100vh - 120px)",
             borderRadius: "20px",
             overflowY: "auto",
             maxWidth: "1800px",
