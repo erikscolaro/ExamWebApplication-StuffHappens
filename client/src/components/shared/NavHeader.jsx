@@ -44,9 +44,8 @@ function NavHeader(props) {
             color: colors.text.dark,
             fontSize: "2rem",
             fontFamily: "'Bangers', cursive",
-          }}
-        >
-          Succede!
+          }}        >
+          Stuff Happens!
         </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -58,12 +57,11 @@ function NavHeader(props) {
               fontSize: "1rem",
               fontWeight: "bold",
             }}
-          >
-            <Nav.Link href="/">Istruzioni</Nav.Link>
+          >            <Nav.Link href="/">Instructions</Nav.Link>
             {props.loggedIn ? (
               <>
-                <Nav.Link href="/play">Gioca</Nav.Link>
-                <Nav.Link href="/history">Cronologia</Nav.Link>
+                <Nav.Link href="/play">Play</Nav.Link>
+                <Nav.Link href="/history">History</Nav.Link>
               </>
             ) : (
               <Nav.Link href="/demo">Demo</Nav.Link>
@@ -73,18 +71,17 @@ function NavHeader(props) {
         </Col>
         {props.loggedIn ? (
             <Col className="d-flex justify-content-end align-items-center nowrap">
-            <Navbar.Text className="me-3">
-              Ciao, {props.user.username}!
+            <Navbar.Text className="me-3">              Hi, {props.user.username}!
             </Navbar.Text>
             <CustomButton
               linkTo={"/"}
-              label="Esci"
+              label="Logout"
               onClick={props.handleLogout}
             />
             </Col>
         ) : (
           <Col className="d-flex justify-content-end align-items-center nowrap">
-          <CustomButton linkTo={"login"} label="Accedi" />
+          <CustomButton linkTo={"login"} label="Login" />
         </Col>
         )}
       </Container>

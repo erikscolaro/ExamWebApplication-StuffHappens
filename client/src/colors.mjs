@@ -46,7 +46,7 @@ export const colors = {
   },
   text: {
     accent: ACCENT,
-    light: GRAY_200,
+    light: GRAY_300,
     dark: GRAY_900,
     black: BLACK,
   },

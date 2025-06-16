@@ -36,9 +36,8 @@ export default function HistoryPage({ user }) {
 
   if (!user) {
     return (
-      <Container className="p-3 text-center">
-        <div style={{ color: colors.text.error || "#dc3545" }}>
-          Errore: Utente non disponibile.
+      <Container className="p-3 text-center">        <div style={{ color: colors.text.error || "#dc3545" }}>
+          Error: User not available.
         </div>
       </Container>
     );
@@ -54,22 +53,20 @@ export default function HistoryPage({ user }) {
             color: colors.text.accent,
             textAlign: "left",
             marginBottom: "2rem",
-          }}
-        >
-          Ciao {user.username}, ecco tutte le tue partite
-        </h2>
+          }}          >
+            Hi {user.username}, here are all your games
+          </h2>
 
         {loading ? (
           <div className="text-center p-3">
             <Spinner
               animation="border"
               style={{ color: colors.background.accent }}
-            />
-            <div style={{ color: colors.text.light }}>Caricamento...</div>
+            />            <div style={{ color: colors.text.light }}>Loading...</div>
           </div>
         ) : games.length === 0 ? (
           <div style={{ color: colors.text.light, textAlign: "center" }}>
-            Non hai ancora giocato nessuna partita!
+            You haven't played any games yet!
           </div>
         ) : (
           <Row className="g-3">
@@ -86,10 +83,9 @@ export default function HistoryPage({ user }) {
 }
 
 function GameRecord({ game }) {
-  const formatDate = (date) => {
-    return dayjs.isDayjs(date)
+  const formatDate = (date) => {    return dayjs.isDayjs(date)
       ? date.format("DD/MM/YYYY HH:mm")
-      : "Data non disponibile";
+      : "Date not available";
   };
 
   return (
@@ -109,9 +105,8 @@ function GameRecord({ game }) {
                 style={{
                   color: colors.text.accent,
                   margin: 0,
-                }}
-              >
-                Partita #{game.id}
+                }}              >
+                Game #{game.id}
               </h5>
               <small style={{ fontSize: "0.75rem" }}>
                 {formatDate(game.createdAt)}
@@ -123,10 +118,9 @@ function GameRecord({ game }) {
                   game.records.filter((r) => r.round > 0).length > 0 &&
                   (game.records
                     .filter((r) => r.round > 0)
-                    .every((r) => r.wasGuessed) ? (
-                    <span style={{ color: colors.logic.success }}>🏆 Vinto</span>
+                    .every((r) => r.wasGuessed) ? (                    <span style={{ color: colors.logic.success }}>🏆 Won</span>
                   ) : (
-                    <span style={{ color: colors.logic.error }}>😢 Perso</span>
+                    <span style={{ color: colors.logic.error }}>😢 Lost</span>
                   ))}
               </div>
               <div
@@ -134,9 +128,8 @@ function GameRecord({ game }) {
                   fontSize: "0.75rem",
                   color: colors.text.light,
                   marginTop: "0.2rem",
-                }}
-              >
-                Carte:
+                }}              >
+                Cards:
                 {game.records
                   ? game.records.filter((r) => r.round > 0 && r.wasGuessed)
                       .length
@@ -158,16 +151,14 @@ function GameRecord({ game }) {
                   paddingRight: "15px",
                 }}
               >
-                <h6 style={{ color: colors.text.light }}>Carte iniziali:</h6>
+                <h6 style={{ color: colors.text.light }}>Starting cards:</h6>
                 {game.records
                   .filter((r) => r.round === 0)
                   .sort(
                     (a, b) =>
                       (a.card?.miseryIndex || 0) - (b.card?.miseryIndex || 0)
-                  )
-                  .map((r, i, array) => (
+                  )                  .map((r, i, array) => (
                     <div key={i}>
-                      {" "}
                       <div
                         style={{
                           padding: "0.2rem 0",
@@ -193,7 +184,7 @@ function GameRecord({ game }) {
               </Col>
 
               <Col xs={6} style={{ paddingLeft: "15px" }}>
-                <h6 style={{ color: colors.text.light }}>Carte giocate:</h6>
+                <h6 style={{ color: colors.text.light }}>Played cards:</h6>
                 {game.records
                   .filter((r) => r.round > 0)
                   .sort((a, b) => a.round - b.round)
@@ -213,7 +204,7 @@ function GameRecord({ game }) {
                       >
                         <span
                         >
-                          Round {r.round}: {r.card?.name || "Carta sconosciuta"}
+                          Round {r.round}: {r.card?.name || "Unknown card"}
                         </span>
                         <span
                         >

@@ -12,6 +12,7 @@ function HomePage({ loggedIn }) {
     color: colors.text.accent,
     fontWeight: "bold",
   };
+
   return (
     <Container
       fluid
@@ -30,7 +31,7 @@ function HomePage({ loggedIn }) {
             fontWeight: "700",
           }}
         >
-          Regole del gioco
+          Stuff Happens - Game Rules
         </h2>
         <ol
           style={{
@@ -42,39 +43,36 @@ function HomePage({ loggedIn }) {
           }}
         >
           <li>
-            Parti con <span style={highlight}>3 carte</span>, rappresentanti
-            situazioni orribili ordinate per sfortuna (da 1.0 a 100.0).
+            Start with <span style={highlight}>3 cards</span>, representing
+            horrible situations ordered by misery (from 1.0 to 100.0).
           </li>
           <li>
-            Ad ogni round ti viene mostrata{" "}
-            <span style={highlight}>una nuova situazione</span> con una
-            descrizione e una immagine, ma senza indice di sfortuna.
+            Each round you'll be shown{" "}
+            <span style={highlight}>a new situation</span> with a
+            description and image, but without the misery index.
           </li>
           <li>
-            Devi indovinare <span style={highlight}>dove si colloca</span>{" "}
-            rispetto alle carte che hai.
+            You must guess <span style={highlight}>where it ranks</span>{" "}
+            compared to the cards you have.
           </li>
           <li>
-            Hai <span style={highlight}>30 secondi</span> per rispondere:
+            You have <span style={highlight}>30 seconds</span> to answer:
             <ul>
               <li>
-                Se indovini, la carta si aggiunge alla tua collezione e ne
-                vedrai i dettagli.
+                If you guess correctly, the card is added to your collection and
+                you'll see its details.
               </li>
-              <li>Se invece non indovini o scade il tempo, perdi la carta!</li>
+              <li>If you guess wrong or time runs out, you lose the card!</li>
             </ul>
           </li>
           <li>
-            <span style={highlight}>Vinci</span> se indovini tutti i round e
-            finisci con 6 carte, <span style={highlight}>perdi</span>{" "}
-            altrimenti.
+            <span style={highlight}>Win</span> if you guess all rounds and
+            end with 6 cards, <span style={highlight}>lose</span> otherwise.
           </li>
+          <li>At the end you'll see a summary and can start a new game.</li>
           <li>
-            Alla fine vedai un riepilogo e puoi iniziare una nuova partita.
-          </li>{" "}
-          <li>
-            Se sei loggato, puoi fare una partita completa di 3 round con
-            cronologia salvata; se anonimo, solo una partita demo di 1 round.
+            If logged in, you can play a full 3-round game with saved
+            history; if anonymous, only a 1-round demo.
           </li>
         </ol>
 
@@ -86,11 +84,11 @@ function HomePage({ loggedIn }) {
               color: colors.text.light,
             }}
           >
-            Metti alla prova le tue abilità e divertiti con il gioco!
+            Test your skills and have fun with the game!
           </p>
 
           <CustomButton
-            label={loggedIn ? "Gioca una partita" : "Prova una demo"}
+            label={loggedIn ? "Play a Game" : "Try a Demo"}
             linkTo={loggedIn ? "/play" : "/demo"}
             variant="primary"
             style={{

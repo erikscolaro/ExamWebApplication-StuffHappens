@@ -141,53 +141,47 @@ export default function GamePage({ isLogged, user }) {
   console.log("Game state:", game);
   console.log("Round current:", roundCurrent);
   console.log("Next card:", nextCard);
-
   return (
     <>
       <CustomModal
         show={showModal}
-        title={`Risultato Round ${game.roundNum}`}
+        title={`Round ${game.roundNum} Result`}
         body={
           showModal && roundResult.isCorrect ? (
             <div>
-              🎉 Grande! Hai risposto correttamente!
+              🎉 Great! You answered correctly!
               <br />
-              Continua così, sei sulla strada giusta.
+              Keep it up, you're on the right track.
               <br />
-              Premi "Continua" per affrontare il prossimo round.
+              Press "Continue" to face the next round.
             </div>
           ) : (
             <div>
-              😢 Ops! Risposta sbagliata.
+              😢 Oops! Wrong answer.
               <br />
-              Nel prossimo round non vedrai la carta che hai giocato.
+              In the next round you won't see the card you played.
               <br />
-              Premi "Continua" per riprovarci!
+              Press "Continue" to try again!
             </div>
           )
         }
         footer={
           <CustomButton
-            label="Continua"
+            label="Continue"
             onClick={() => {
               setShowModal(false);
               setRoundCurrent((roundCurrent) => roundCurrent + 1); // Move to the next round
             }}
           />
         }
-        isBlocking={true}
-        onHide={() => setShowModal(false)}
+        isBlocking={true}        onHide={() => setShowModal(false)}
       />
       <Container
         fluid
-        className="d-flex p-3 flex-column justify-content-between"
-        style={{
-          height: "100%",
-        }}
+        className="d-flex p-3 flex-column justify-content-center gap-5"
       >
         <Row className="justify-content-between align-items-center">
           <Col>
-            {" "}
             <CountdownTimer
               key={countdownKey}
               resetKey={countdownKey}
@@ -226,9 +220,8 @@ export default function GamePage({ isLogged, user }) {
                 (e.currentTarget.style.transform = "scale(1)")
               }
             >
-              
               <CustomButton
-                label={game.roundNum === 0 ? "Start Game" : "Invia soluzione"}
+                label={game.roundNum === 0 ? "Start Game" : "Submit Solution"}
                 onClick={async () => {
                   if (game.roundNum === 0) {
                     setRoundCurrent(1); // Start the first round
@@ -311,14 +304,13 @@ function CardsArea({ cards }) {
           padding: "5px",
         }}
       >
-        <Col className="text-start">
-          <i className="bi bi-dash-circle" style={{ fontSize: "1.5rem" }}></i>
+        <Col className="text-start">          <i className="bi bi-dash-circle" style={{ fontSize: "1.5rem" }}></i>
         </Col>
         <Col
           className="text-center"
           style={{ fontFamily: "'Bangers', sans-serif", fontSize: "1.5rem" }}
         >
-          Sfigometro
+          Misery Scale
         </Col>
         <Col className="text-end">
           <i className="bi bi-plus-circle" style={{ fontSize: "1.5rem" }}></i>
@@ -334,10 +326,8 @@ function NewCardArea(props) {
       fluid
       className="d-flex flex-column align-items-center"
       style={{
-        position: "relative",
-      }}
+        position: "relative",      }}
     >
-      {" "}
       <Row
         style={{
           borderRadius: "22px",
@@ -351,13 +341,7 @@ function NewCardArea(props) {
           position: "relative",
           overflow: "hidden",
         }}
-      >
-        {" "}
-        {props.card == null ? (
-          <></>
-        ) : (
-          <CustomCard card={props.card} />
-        )}
+      >        {props.card == null ? <></> : <CustomCard card={props.card} />}
       </Row>
       <Row
         style={{
@@ -371,7 +355,7 @@ function NewCardArea(props) {
           padding: "0px 20px",
         }}
       >
-        La tua carta
+        Your Card
       </Row>
     </Container>
   );
@@ -389,10 +373,8 @@ function CountdownTimer({ resetKey, isPlaying, onComplete }) {
         padding: "20px",
         borderRadius: "40px",
         boxShadow: "0 0 20px " + colors.background.gray_800,
-        backgroundColor: colors.background.gray_800,
-      }}
+        backgroundColor: colors.background.gray_800,      }}
     >
-      {" "}
       <CountdownCircleTimer
         isPlaying={isPlaying}
         duration={30}

@@ -36,9 +36,8 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       const userResponse = await API.logIn(credentials);
-      setLoggedIn(true);
-      setMessage({
-        msg: `Benvenuto, ${userResponse.user.username}!`,
+      setLoggedIn(true);      setMessage({
+        msg: `Welcome, ${userResponse.user.username}!`,
         type: "success",
       });
       setUser(userResponse.user);
@@ -50,10 +49,9 @@ function App() {
     try {
       await API.logOut();
       setLoggedIn(false);
-      setUser(null);
-      setMessage({ msg: "Logout effettuato con successo!", type: "info" });
+      setUser(null);      setMessage({ msg: "Logout successful!", type: "info" });
     } catch {
-      setMessage({ msg: "Errore durante il logout", type: "danger" });
+      setMessage({ msg: "Error during logout", type: "danger" });
     }
   };
 
