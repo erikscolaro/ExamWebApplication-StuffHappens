@@ -251,7 +251,7 @@ export async function handleCheckAnswer(
   const respondedAt = dayjs();
 
   // Validate game access and get game object
-  const game = await validateGameAccess(gameId, isDemo, userId);
+  let game = await validateGameAccess(gameId, isDemo, userId);
 
   // Check if the game is in the correct round and not ended
   if (game.roundNum != roundId) {
@@ -303,7 +303,8 @@ export async function handleCheckAnswer(
   );
 
   // Update game state if needed
-  await checkAndUpdateGameState(game);
+  game = await checkAndUpdateGameState(game);
+  response.isEnded = game.isEnded;
 
   return response;
 }

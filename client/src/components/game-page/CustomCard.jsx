@@ -54,7 +54,8 @@ function CustomCard({ card, placeholder = false, children }) {
             }
       }
     >
-      {placeholder ? (        children
+      {placeholder ? (
+        children
       ) : (
         <>
           <Card.Img

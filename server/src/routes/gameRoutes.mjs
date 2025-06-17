@@ -129,19 +129,13 @@ request body:
 response if correct answer:
 {
   "isCorrect": true,
-  "correctOrder": [1, 2, 3, 4]  // Cards sorted by misery index (ascending)
+  "isEnded": false, // true if the game is ended
 }
 
-response if incorrect answer:
+response if incorrect answer or timeout
 {
   "isCorrect": false,
-  "correctOrder": [3, 1, 4, 2]  // Correct order sorted by misery index (ascending)
-}
-
-response if user did not answer in time (timeout):
-{
-  "isCorrect": false
-  // Note: no correctOrder provided for timeout
+  "isEnded": true, // true if the game is ended
 }
 */
 router.post(

@@ -4,6 +4,7 @@
 
 @baseUrl = http://localhost:3001
 @username = pirataarrabbiato99
+@userid = 1
 
 
 ### ============================================
@@ -23,25 +24,25 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/sessions/current
 
 ### 3. CREA NUOVA PARTITA NON DEMO
-POST {{baseUrl}}/api/v1/users/{{username}}/games/new
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/new
 Content-Type: application/json
 
 
 ###
-@gameid = 43
+@gameid = 846
 
 ### 4. OTTIENI STORIA PARTITE (opzionale - per vedere lo stato)
-GET {{baseUrl}}/api/v1/users/{{username}}/games
+GET {{baseUrl}}/api/v1/users/{{userid}}/games
 
 ### 5. INIZIA PRIMO ROUND - Ottieni la prima carta
 # Sostituisci {gameId} con l'ID della partita creata al punto 3
-POST {{baseUrl}}/api/v1/users/{{username}}/games/{{gameid}}/round/1/begin
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/1/begin
 Content-Type: application/json
 
 ### 6. VERIFICA RISPOSTA PRIMO ROUND
 # Sostituisci {gameId} con l'ID della partita
 # cardsIds dovrebbe contenere gli ID delle carte nell'ordine corretto (dal misery index più basso al più alto)
-POST {{baseUrl}}/api/v1/users/{{username}}/games/{{gameid}}/round/1/verify
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/1/verify
 Content-Type: application/json
 
 {
@@ -49,11 +50,11 @@ Content-Type: application/json
 }
 
 ### 7. INIZIA SECONDO ROUND - Ottieni la seconda carta
-POST {{baseUrl}}/api/v1/users/{{username}}/games/{{gameid}}/round/2/begin
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/2/begin
 Content-Type: application/json
 
 ### 8. VERIFICA RISPOSTA SECONDO ROUND
-POST {{baseUrl}}/api/v1/users/{{username}}/games/{{gameid}}/round/2/verify
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/2/verify
 Content-Type: application/json
 
 {
@@ -61,11 +62,11 @@ Content-Type: application/json
 }
 
 ### 9. INIZIA TERZO ROUND - Ottieni la terza carta
-POST {{baseUrl}}/api/v1/users/{{username}}/games/{{gameid}}/round/3/begin
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/3/begin
 Content-Type: application/json
 
 ### 10. VERIFICA RISPOSTA TERZO ROUND (finale)
-POST {{baseUrl}}/api/v1/users/{{username}}/games/{{gameid}}/round/3/verify
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/3/verify
 Content-Type: application/json
 
 {
@@ -73,7 +74,7 @@ Content-Type: application/json
 }
 
 ### 11. VERIFICA STATO FINALE PARTITA
-GET {{baseUrl}}/api/v1/users/{{username}}/games
+GET {{baseUrl}}/api/v1/users/{{userid}}/games
 
 ### 12. LOGOUT - Termina la sessione
 DELETE {{baseUrl}}/api/v1/sessions/current
