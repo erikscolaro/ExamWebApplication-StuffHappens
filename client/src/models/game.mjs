@@ -1,19 +1,29 @@
 import { Card } from "./card.mjs";
 
 export class Game {
-  constructor(id, userid, createdAt, roundNum, isended, isdemo, records = []) {
+  constructor(id, userId, createdAt, roundNum, isEnded, isDemo, livesRemaining = 3, records = []) {
     this.id = id;
-    this.userid = userid;
+    this.userId = userId;
     this.createdAt = createdAt;
     this.roundNum = roundNum;
-    this.isEnded = isended === null ? false : Boolean(isended);
-    this.isDemo = isdemo === null ? false : Boolean(isdemo);
+    this.isEnded = isEnded === null ? false : Boolean(isEnded);
+    this.isDemo = isDemo === null ? false : Boolean(isDemo);
+    this.livesRemaining = livesRemaining;
     this.records = records;
   }
 
   getCardsIdsOrdered() {
-    return this.records
-      .filter(record => record.round <= this.roundNum && record.card)
+    // Include only:
+    // 1. Cards from previous rounds that were guessed correctly (wasGuessed = true)
+    // 2. The current round card (regardless of wasGuessed status, since it's being answered now)
+    const validRecords = this.records.filter(
+      (record) => record.card && (
+        (record.round < this.roundNum && record.wasGuessed === true) ||
+        (record.round === this.roundNum)
+      )
+    );
+
+    return validRecords
       .map(record => record.card)
       .filter(card => card.miseryIndex !== undefined && card.miseryIndex !== null)
       .sort((a, b) => a.miseryIndex - b.miseryIndex);
@@ -22,10 +32,12 @@ export class Game {
   toJSON() {
     return {
       id: this.id,
+      userId: this.userId,
       createdAt: this.createdAt,
       roundNum: this.roundNum,
       isEnded: this.isEnded,
       isDemo: this.isDemo,
+      livesRemaining: this.livesRemaining,
       records: this.records.filter(record => this.roundNum >= record.round).map(record => record.toJSON())
     };
   }
@@ -38,6 +50,7 @@ export class Game {
       json.roundNum,
       json.isEnded,
       json.isDemo,
+      json.livesRemaining || 3,
       json.records ? json.records.map(record => GameRecord.fromJSON(record)) : []
     );
   }
