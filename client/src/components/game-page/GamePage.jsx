@@ -276,10 +276,10 @@ export default function GamePage() {
       />
       <Container
         fluid
-        className="d-flex p-3 flex-column justify-content-center align-items-center gap-5"
+        className="d-flex p-3 flex-column align-items-center gap-5"
         style={{
           width: "100%",
-          height: "100%",
+          minHeight: "100%",
         }}
       >
         <Row
