@@ -8,22 +8,22 @@ import NotFound from "./components/shared/NotFound.jsx";
 
 import HomePage from "./components/HomePage.jsx";
 import GamePage from "./components/game-page/GamePage.jsx";
-import { LoginForm } from "./components/shared/AuthComponents.jsx";
+import LoginPage from "./components/login-page/LoginPage.jsx";
 import ProfilePage from "./components/profile-page/ProfilePage.jsx";
 
+import UserContext from "./contexts/userContext.js";
+
 function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
     const checkUserSession = async () => {
       try {
         setIsLoading(true);
-        await API.getUserInfo();
+        const userInfo = await API.getUserInfo();
+        setUser(userInfo.user);
       } catch {
-        setLoggedIn(false);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -36,7 +36,6 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       const userResponse = await API.logIn(credentials);
-      setLoggedIn(true);
       setUser(userResponse.user);
       setMessage({
         msg: `Welcome, ${userResponse.user.username}!`,
@@ -50,7 +49,6 @@ function App() {
   const handleLogout = async () => {
     try {
       await API.logOut();
-      setLoggedIn(false);
       setUser(null);
       setMessage({ msg: "Logout successful!", type: "info" });
     } catch (err) {
@@ -59,58 +57,39 @@ function App() {
   };
 
   return (
-    <Routes>
-      <Route
-        element={
-          <DefaultLayout
-            loggedIn={loggedIn}
-            handleLogin={handleLogin}
-            handleLogout={handleLogout}
-            message={message}
-            setMessage={setMessage}
-            user={user}
+    <UserContext.Provider
+      value={{ user, isLoading, handleLogin, handleLogout }}
+    >
+      <Routes>
+        <Route
+          element={<DefaultLayout message={message} setMessage={setMessage} />}
+        >          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/login"
+            element={
+              user ? (
+                <Navigate replace to="/" />
+              ) : (
+                <LoginPage handleLogin={handleLogin} />
+              )
+            }
           />
-        }
-      >
-        <Route path="/" element={<HomePage loggedIn={loggedIn} />} />
-        <Route
-          path="/login"
-          element={
-            loggedIn ? (
-              <Navigate replace to="/" />
-            ) : (
-              <LoginForm handleLogin={handleLogin} />
-            )
-          }
-        />
-        <Route
-          path="/play"
-          element={
-            isLoading ? (
-              <div>Loading...</div>
-            ) : loggedIn ? (
-              <GamePage user={user} isLogged={loggedIn} />
-            ) : (
-              <Navigate replace to="/" />
-            )
-          }
-        />
-        <Route path="/demo" element={<GamePage isLogged={false} />} />
-        <Route
-          path="/profile"
-          element={
-            isLoading ? (
-              <div>Loading...</div>
-            ) : loggedIn ? (
-              <ProfilePage user={user} />
-            ) : (
-              <Navigate replace to="/" />
-            )
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+          <Route
+            path="/play"
+            element={
+              user ? (
+                <GamePage />
+              ) : (
+                <Navigate replace to="/" />
+              )
+            }
+          />
+          <Route path="/demo" element={<GamePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </UserContext.Provider>
   );
 }
 

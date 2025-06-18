@@ -2,16 +2,20 @@ import { Container, Row, Col, Card } from "react-bootstrap";
 import { colors } from "../colors.mjs";
 import { Link } from "react-router";
 import CustomButton from "./shared/CustomButton";
+import { useContext } from "react";
+import UserContext from "../contexts/userContext";
 
 /**
  * HomePage component that serves as the main landing page
  * Shows different content based on user authentication status
  */
-function HomePage({ loggedIn }) {
+function HomePage() {
   const highlight = {
     color: colors.text.accent,
     fontWeight: "bold",
   };
+
+  const {user } = useContext(UserContext);
 
   return (
     <Container
@@ -85,8 +89,8 @@ function HomePage({ loggedIn }) {
           </p>
 
           <CustomButton
-            label={loggedIn ? "Play a Game" : "Try a Demo"}
-            linkTo={loggedIn ? "/play" : "/demo"}
+            label={user ? "Play a Game" : "Try a Demo"}
+            linkTo={user ? "/play" : "/demo"}
             variant="primary"
             style={{
               padding: "12px 30px",

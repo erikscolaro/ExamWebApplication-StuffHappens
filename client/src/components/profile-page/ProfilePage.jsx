@@ -1,16 +1,24 @@
-import { useState, useEffect } from "react";
-import { Container, Row, Col, Spinner } from "react-bootstrap";
+import { useState, useEffect, useContext } from "react";
+import { Container, Row, Col } from "react-bootstrap";
+import { useNavigate } from "react-router";
 import { colors } from "../../colors.mjs";
 import API from "../../api/api.mjs";
 import GameRecord from "../shared/GameRecord";
 import dayjs from "dayjs";
+import CustomSpinner from "../shared/CustomSpinner.jsx";
+import UserContext from "../../contexts/userContext";
 
-export default function ProfilePage({ user }) {
+export default function ProfilePage() {
+  const { user, isLoading } = useContext(UserContext);
+  const navigate = useNavigate();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      navigate("/");
+      return;
+    }
 
     const loadGames = async () => {
       try {
@@ -29,19 +37,13 @@ export default function ProfilePage({ user }) {
       } finally {
         setLoading(false);
       }
-    };
+    };    loadGames();
+  }, [user, navigate]);
 
-    loadGames();
-  }, [user]);
-  if (!user) {
-    return (
-      <Container className="p-3 text-center">
-        <div style={{ color: colors.text.error || "#dc3545" }}>
-          Error: User not available.
-        </div>
-      </Container>
-    );
+  if (isLoading || loading) {
+    return <CustomSpinner />;
   }
+
   return (
     <Container
       fluid
@@ -60,18 +62,9 @@ export default function ProfilePage({ user }) {
             marginBottom: "2rem",
           }}
         >
-          Hi {user.username}, here are all your games
-        </h2>
+          Hi {user.username}, here are all your games        </h2>
 
-        {loading ? (
-          <div className="text-center p-3">
-            <Spinner
-              animation="border"
-              style={{ color: colors.background.accent }}
-            />
-            <div style={{ color: colors.text.light }}>Loading...</div>
-          </div>
-        ) : games.length === 0 ? (
+        {games.length === 0 ? (
           <div style={{ color: colors.text.light, textAlign: "center" }}>
             You haven't played any games yet!
           </div>

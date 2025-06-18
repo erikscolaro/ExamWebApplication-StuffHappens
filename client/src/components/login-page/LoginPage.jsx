@@ -1,4 +1,4 @@
-import { useActionState } from "react";
+import { useActionState, useContext } from "react";
 import {
   Form,
   Button,
@@ -8,10 +8,14 @@ import {
   Card,
   Container,
 } from "react-bootstrap";
-import CustomButton from "./CustomButton";
+import CustomSpinner from "../shared/CustomSpinner.jsx";
+import CustomButton from "../shared/CustomButton";
 import { colors } from "../../colors.mjs";
+import UserContext from "../../contexts/userContext.js";
 
-function LoginForm(props) {
+export default function LoginPage() {
+  const { handleLogin, isLoading } = useContext(UserContext);
+
   const [state, formAction, isPending] = useActionState(loginFunction, {
     username: "",
     password: "",
@@ -23,12 +27,15 @@ function LoginForm(props) {
       password: formData.get("password"),
     };
     try {
-      await props.handleLogin(credentials);
+      await handleLogin(credentials);
       return { success: true };
     } catch (err) {
       console.error("Login failed:", err);
       return { error: "Login failed. Check your credentials." };
     }
+  }
+  if (isPending || isLoading) {
+    return <CustomSpinner />;
   }
 
   return (
@@ -62,7 +69,6 @@ function LoginForm(props) {
               }}
             />
           </Form.Group>
-
           <Form.Group controlId="password" className="mb-4">
             <Form.Label style={{ color: colors.text.light }}>
               Password
@@ -78,11 +84,9 @@ function LoginForm(props) {
               }}
             />
           </Form.Group>
-
           {state.error && (
             <p className="text-danger text-center">{state.error}</p>
           )}
-
           <Form.Text
             className="mb-3 text-left d-block"
             style={{
@@ -97,22 +101,14 @@ function LoginForm(props) {
             <div>
               User 2: <strong>jacksparrow</strong> / Password:{" "}
               <strong>password</strong>
-            </div>
+            </div>{" "}
           </Form.Text>
-
-          {isPending && (
-            <div className="d-flex justify-content-center mb-3">
-              <div className="spinner-border text-light" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          )}
           <Container
             fluid
             className="align-items-center d-flex justify-content-center"
           >
             <CustomButton type="submit" disabled={isPending} label={"Submit"}>
-              {isPending ? "Logging in..." : "Login"}
+              Login
             </CustomButton>
           </Container>
         </Form>
@@ -120,4 +116,3 @@ function LoginForm(props) {
     </Container>
   );
 }
-export { LoginForm };

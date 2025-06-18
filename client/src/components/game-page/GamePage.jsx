@@ -1,7 +1,7 @@
 import { Col, Container, Row } from "react-bootstrap";
 import { colors } from "../../colors.mjs";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import CustomButton from "../shared/CustomButton";
 import API from "../../api/api.mjs";
 import CustomModal from "../shared/CustomModal";
@@ -12,6 +12,8 @@ import GameEndModal from "./GameEndModal";
 import { Game } from "../../models/game.mjs";
 import { Card } from "../../models/card.mjs";
 import LivesIndicator from "./LivesIndicator";
+import UserContext from "../../contexts/userContext";
+import CustomSpinner from "../shared/CustomSpinner.jsx";
 
 function getCardsIdsOrdered(game) {
   if (!game || !game.records) return [];
@@ -65,7 +67,9 @@ function addOrUpdateRecord(
   }
 }
 
-export default function GamePage({ isLogged, user }) {
+export default function GamePage() {
+  const { user, isLoading } = useContext(UserContext);
+
   const [game, setGame] = useState(null);
   const [roundCurrent, setRoundCurrent] = useState(0);
   const [nextCard, setNextCard] = useState(null);
@@ -85,23 +89,24 @@ export default function GamePage({ isLogged, user }) {
     setTimerIsPlaying(false);
 
     let cards = getCardsIdsOrdered(game);
-    
+
     // If user has selected a position, insert the new card
     if (selector !== null && selector !== undefined) {
       cards.splice(selector, 0, nextCard);
     }
     // If no selection (selector is null), send only existing cards (timeout/no answer)
-    
-    const cardIds = cards.map((c) => c.id);try {
+
+    const cardIds = cards.map((c) => c.id);
+    try {
       console.log("[VERIFY ANSWER] Request params:", {
         userId: user?.id,
         gameId: game?.id,
         roundCurrent: roundCurrent,
         cardIds: cardIds,
-        isLogged: isLogged
       });
-      
-      let result = null;      if (isLogged) {
+
+      let result = null;
+      if (user) {
         result = await API.checkAnswerGame(
           user.id,
           game.id,
@@ -111,7 +116,7 @@ export default function GamePage({ isLogged, user }) {
       } else {
         result = await API.checkAnswerDemo(game.id, roundCurrent, cardIds);
       }
-      
+
       console.log("[VERIFY ANSWER] Server response:", result);
 
       // Extract isCorrect from gameRecord
@@ -128,7 +133,7 @@ export default function GamePage({ isLogged, user }) {
 
         // Update lives and ended status from server response
         updatedGame.livesRemaining = result.livesRemaining;
-        updatedGame.isEnded = result.isEnded;        // Add the game record - only if the answer was correct
+        updatedGame.isEnded = result.isEnded; // Add the game record - only if the answer was correct
         if (result.gameRecord && result.gameRecord.card) {
           // Correct answer: use the card with misery index from server
           addOrUpdateRecord(
@@ -138,7 +143,8 @@ export default function GamePage({ isLogged, user }) {
             true, // wasGuessed = true
             result.gameRecord.requestedAt,
             result.gameRecord.respondedAt
-          );        }
+          );
+        }
         // If answer was wrong (result.gameRecord.card is null), don't save any record
 
         return updatedGame;
@@ -163,7 +169,8 @@ export default function GamePage({ isLogged, user }) {
       shouldRepeat: false,
       delay: 0,
     };
-  };  const handleGameAction = async () => {
+  };
+  const handleGameAction = async () => {
     // Don't allow actions if game is ended
     if (game?.isEnded) {
       return;
@@ -191,7 +198,7 @@ export default function GamePage({ isLogged, user }) {
     const initializeGame = async () => {
       try {
         let result = null;
-        if (isLogged) {
+        if (user) {
           result = await API.createGame(user.id);
         } else {
           result = await API.createDemoGame();
@@ -212,18 +219,19 @@ export default function GamePage({ isLogged, user }) {
       setGameIsPlaying(true);
       initializeGame();
     }
-  }, [user, isLogged, roundCurrent, gameIsPlaying]);  useEffect(() => {
+  }, [user, roundCurrent, gameIsPlaying]);
+
+  useEffect(() => {
     const fetchNextRound = async () => {
       try {
         console.log("[DRAW CARD] Request params:", {
           userId: user?.id,
           gameId: game?.id,
-          roundCurrent: roundCurrent,
-          isLogged: isLogged
+          roundCurrent: roundCurrent
         });
-        
+
         let result = null;
-        if (isLogged) {
+        if (user) {
           result = await API.nextRoundGame(user.id, game.id, roundCurrent);
         } else {
           result = await API.nextRoundDemo(game.id, roundCurrent);
@@ -236,7 +244,7 @@ export default function GamePage({ isLogged, user }) {
             ...prevGame,
             roundNum: newGameData.roundNum,
             isEnded: newGameData.isEnded,
-            livesRemaining: newGameData.livesRemaining,            // Keep existing records - don't overwrite with empty array from server
+            livesRemaining: newGameData.livesRemaining, // Keep existing records - don't overwrite with empty array from server
           };
         });
         setNextCard(result.nextCard);
@@ -245,7 +253,8 @@ export default function GamePage({ isLogged, user }) {
         console.error("Error fetching next round:", error);
         throw error;
       }
-    };    if (
+    };
+    if (
       roundCurrent === 0 ||
       !game ||
       !game.id ||
@@ -255,26 +264,9 @@ export default function GamePage({ isLogged, user }) {
     )
       return;
     fetchNextRound();
-  }, [roundCurrent, game, isLogged, user]);
-  if (!game) {
-    return (
-      <Container
-        fluid
-        className="d-flex justify-content-center align-items-center"
-        style={{
-          height: "100vh",
-          backgroundColor: colors.background.primary,
-        }}
-      >
-        <div
-          className="spinner-border"
-          role="status"
-          style={{ color: colors.background.accent }}
-        >
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </Container>
-    );  }
+  }, [roundCurrent, game, user]);    if (isLoading || !game) {
+    return <CustomSpinner />;
+  }
 
   return (
     <>
@@ -318,7 +310,7 @@ export default function GamePage({ isLogged, user }) {
               isPlaying={timerIsPlaying}
               onComplete={handleCountdownComplete}
             />
-          </Col>{" "}
+          </Col>
           <Col className="text-center">
             {/* Widget delle vite */}
             {game && (
@@ -345,7 +337,7 @@ export default function GamePage({ isLogged, user }) {
               >
                 {game.roundNum === 0 ? "READY ?" : `ROUND ${game.roundNum}`}
               </h2>
-            </div>{" "}
+            </div>
             <div
               style={{
                 transition: "transform 0.2s ease",
@@ -358,7 +350,7 @@ export default function GamePage({ isLogged, user }) {
                 (e.currentTarget.style.transform = "scale(1)")
               }
             >
-              {" "}
+              
               <CustomButton
                 label={!nextCard ? "Start Game" : "Submit Solution"}
                 onClick={handleGameAction}

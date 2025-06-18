@@ -7,9 +7,13 @@ import {
 import { useLocation } from "react-router";
 import { colors } from "../../colors.mjs";
 import CustomButton from "./CustomButton";
+import { useContext } from "react";
+import UserContext from "../../contexts/userContext";
 
-function NavHeader(props) {
-  let page = useLocation().pathname;
+function NavHeader() {
+  const page = useLocation().pathname;
+
+  const { user, handleLogout } = useContext(UserContext);
 
   return (
     <Navbar
@@ -55,10 +59,9 @@ function NavHeader(props) {
                 fontSize: "1rem",
                 fontWeight: "bold",
               }}
-            >
-              {" "}
+            >              {" "}
               <Nav.Link href="/">Instructions</Nav.Link>{" "}
-              {props.loggedIn ? (
+              {user ? (
                 <>
                   <Nav.Link href="/play">Play</Nav.Link>
                   <Nav.Link href="/profile">Profile</Nav.Link>
@@ -68,17 +71,15 @@ function NavHeader(props) {
               )}
             </Nav>
           </Navbar.Collapse>
-        </Col>
-        {props.loggedIn ? (
+        </Col>        {user ? (
           <Col className="d-flex justify-content-end align-items-center nowrap">
             <Navbar.Text className="me-3">
-              {" "}
-              Hi, {props.user.username}!
+              Hi, {user.username}!
             </Navbar.Text>
             <CustomButton
               linkTo={"/"}
               label="Logout"
-              onClick={props.handleLogout}
+              onClick={handleLogout}
             />
           </Col>
         ) : (
