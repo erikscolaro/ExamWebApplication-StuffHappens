@@ -1,9 +1,4 @@
-import {
-  Col,
-  Container,
-  Nav,
-  Navbar,
-} from "react-bootstrap";
+import { Col, Container, Nav, Navbar } from "react-bootstrap";
 import { useLocation } from "react-router";
 import { colors } from "../../colors.mjs";
 import CustomButton from "./CustomButton";
@@ -59,8 +54,8 @@ function NavHeader() {
                 fontSize: "1rem",
                 fontWeight: "bold",
               }}
-            >              {" "}
-              <Nav.Link href="/">Instructions</Nav.Link>{" "}
+            >
+              <Nav.Link href="/">Instructions</Nav.Link>
               {user ? (
                 <>
                   <Nav.Link href="/play">Play</Nav.Link>
@@ -71,16 +66,11 @@ function NavHeader() {
               )}
             </Nav>
           </Navbar.Collapse>
-        </Col>        {user ? (
+        </Col>{" "}
+        {user ? (
           <Col className="d-flex justify-content-end align-items-center nowrap">
-            <Navbar.Text className="me-3">
-              Hi, {user.username}!
-            </Navbar.Text>
-            <CustomButton
-              linkTo={"/"}
-              label="Logout"
-              onClick={handleLogout}
-            />
+            <Navbar.Text className="me-3">Hi, {user.username}!</Navbar.Text>
+            <CustomButton linkTo={"/"} label="Logout" onClick={handleLogout} />
           </Col>
         ) : (
           <Col className="d-flex justify-content-end align-items-center nowrap">

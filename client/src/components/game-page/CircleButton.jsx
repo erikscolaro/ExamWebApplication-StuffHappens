@@ -6,8 +6,8 @@ export default function CircleButton({ id, actuallyPressed, setPressed, roundSta
   return (
     <Button
       id={id}      onClick={() => {
-        if (!roundStarted) return; // Blocca l'interazione se il round non è iniziato
-          if (id === actuallyPressed) {
+        if (!roundStarted) return;
+        if (id === actuallyPressed) {
           setPressed(null);
           return;
         }

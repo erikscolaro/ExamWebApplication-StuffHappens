@@ -1,10 +1,6 @@
 import { useActionState, useContext } from "react";
 import {
   Form,
-  Button,
-  Row,
-  Col,
-  Alert,
   Card,
   Container,
 } from "react-bootstrap";
@@ -95,13 +91,13 @@ export default function LoginPage() {
             }}
           >
             <div>
-              User 1: <strong>pirataarrabbiato99</strong> / Password:{" "}
+              User 1: <strong>pirataarrabbiato99</strong> / Password:
               <strong>password</strong>
             </div>
             <div>
-              User 2: <strong>jacksparrow</strong> / Password:{" "}
+              User 2: <strong>jacksparrow</strong> / Password:
               <strong>password</strong>
-            </div>{" "}
+            </div>
           </Form.Text>
           <Container
             fluid

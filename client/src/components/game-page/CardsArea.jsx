@@ -5,7 +5,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import CircleButton from "./CircleButton";
 import { Fragment } from "react";
 
-export default function CardsArea({ cards, selector, setSelector, roundStarted = true }) {
+export default function CardsArea({ cards, selector, setSelector, roundStarted = true, showButtons = true }) {
   return (
     <Container
       fluid
@@ -24,21 +24,25 @@ export default function CardsArea({ cards, selector, setSelector, roundStarted =
           overflowY: "hidden",
           scrollbarWidth: "thin",
           scrollbarColor: `${colors.background.accentDarkTransparent} transparent`,
-        }}
-      >        <CircleButton
-          key={0}
-          id={0}
-          actuallyPressed={selector}
-          setPressed={setSelector}
-          roundStarted={roundStarted}        />
+        }}      >        {showButtons && (
+          <CircleButton
+            key={0}
+            id={0}
+            actuallyPressed={selector}
+            setPressed={setSelector}
+            roundStarted={roundStarted}
+          />
+        )}
         {cards.map((card, index) => (
             <Fragment key={`fragment-${index}`}>
-              <CustomCard card={card} />              <CircleButton
-                id={index + 1}
-                actuallyPressed={selector}
-                setPressed={setSelector}
-                roundStarted={roundStarted}
-              />
+              <CustomCard card={card} />              {showButtons && (
+                <CircleButton
+                  id={index + 1}
+                  actuallyPressed={selector}
+                  setPressed={setSelector}
+                  roundStarted={roundStarted}
+                />
+              )}
             </Fragment>
           ))
         }
