@@ -1,6 +1,8 @@
 
 ### FLUSSO TIPICO DI ESECUZIONE ###
 ### Utente: pirataarrabbiato99, Password: password ###
+### LOGICA AGGIORNATA: 3 carte di base + 3 vite ###
+### Il gioco finisce quando: vite = 0 (3 errori) O 6 carte totali indovinate (3 base + 3 round) ###
 
 @baseUrl = http://localhost:3001
 @username = pirataarrabbiato99
@@ -24,56 +26,63 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/sessions/current
 
 ### 3. CREA NUOVA PARTITA NON DEMO
+# Risposta: gioco con 3 carte di base (round 0) + roundNum=1 + livesRemaining=3
 POST {{baseUrl}}/api/v1/users/{{userid}}/games/new
 Content-Type: application/json
 
-
 ###
-@gameid = 846
+@gameid = 17
 
 ### 4. OTTIENI STORIA PARTITE (opzionale - per vedere lo stato)
 GET {{baseUrl}}/api/v1/users/{{userid}}/games
 
-### 5. INIZIA PRIMO ROUND - Ottieni la prima carta
-# Sostituisci {gameId} con l'ID della partita creata al punto 3
+### 5. INIZIA PRIMO ROUND - Ottieni la quarta carta
+# Risposta: 3 carte di base visibili + 1 nuova carta pescata (senza misery index)
 POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/1/begin
 Content-Type: application/json
 
 ### 6. VERIFICA RISPOSTA PRIMO ROUND
-# Sostituisci {gameId} con l'ID della partita
-# cardsIds dovrebbe contenere gli ID delle carte nell'ordine corretto (dal misery index più basso al più alto)
+# cardsIds: ordine di TUTTE E 4 le carte (3 base + 1 nuova) dal misery index più basso al più alto
+# Se CORRETTO: carte indovinate +1, continua al round 2
+# Se SBAGLIATO: vite -1, continua al round 2 (se vite > 0)
 POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/1/verify
 Content-Type: application/json
 
 {
-  "cardsIds": [1, 2, 3, 17]
+  "cardsIds": [1,2,3,4]
 }
 
-### 7. INIZIA SECONDO ROUND - Ottieni la seconda carta
+### 7. INIZIA SECONDO ROUND - Ottieni la quinta carta
+# Risposta: carte precedenti + 1 nuova carta pescata
 POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/2/begin
 Content-Type: application/json
 
-### 8. VERIFICA RISPOSTA SECONDO ROUND
+### 8. VERIFICA RISPOSTA SECONDO ROUND  
+# cardsIds: ordine di TUTTE le carte presenti dal misery index più basso al più alto
 POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/2/verify
 Content-Type: application/json
 
 {
-  "cardsIds": [1, 2, 3, 4]
+  "cardsIds": [12, 28, 37, 42, 47]
 }
 
-### 9. INIZIA TERZO ROUND - Ottieni la terza carta
+### 9. INIZIA TERZO ROUND - Ottieni la sesta carta
+# Il gioco continua finché: vite > 0 AND carte totali indovinate < 6 (incluse le 3 di base)
 POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/3/begin
 Content-Type: application/json
 
-### 10. VERIFICA RISPOSTA TERZO ROUND (finale)
+### 10. VERIFICA RISPOSTA TERZO ROUND
+# Se questa è la terza risposta corretta, il gioco finisce (VITTORIA - 6 carte totali indovinate)
+# Se sbagliata e vite = 1, il gioco finisce (SCONFITTA)
 POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{gameid}}/round/3/verify
 Content-Type: application/json
 
 {
-  "cardsIds": [1, 2, 3, 4, 5, 6]
+  "cardsIds": [12, 28, 37, 42, 47, 49]
 }
 
 ### 11. VERIFICA STATO FINALE PARTITA
+# Controlla se isEnded=true e livesRemaining
 GET {{baseUrl}}/api/v1/users/{{userid}}/games
 
 ### 12. LOGOUT - Termina la sessione
@@ -84,28 +93,80 @@ DELETE {{baseUrl}}/api/v1/sessions/current
 ### ============================================
 
 ### DEMO 1. CREA NUOVA PARTITA DEMO (senza autenticazione)
+# Risposta: gioco demo con 3 carte di base + roundNum=1 + livesRemaining=3
 POST {{baseUrl}}/api/v1/demos/new
 Content-Type: application/json
 
 ###
-@demoGameId = 36
+@demoGameId = 7
 
-### DEMO 2. INIZIA PRIMO ROUND DEMO - Ottieni la prima carta
-# Sostituisci {demoGameId} con l'ID della partita demo creata al punto DEMO 1
+### DEMO 2. INIZIA PRIMO ROUND DEMO - Ottieni la quarta carta
+# Risposta: 3 carte di base visibili + 1 nuova carta pescata
 POST {{baseUrl}}/api/v1/demos/{{demoGameId}}/round/1/begin
 Content-Type: application/json
 
 ### DEMO 3. VERIFICA RISPOSTA PRIMO ROUND DEMO (finale per demo)
-# Sostituisci {demoGameId} con l'ID della partita demo
-# cardsIds dovrebbe contenere gli ID delle 4 carte nell'ordine corretto (dal misery index più basso al più alto)
+# cardsIds: ordine di TUTTE E 4 le carte dal misery index più basso al più alto
+# Il gioco demo finisce SEMPRE dopo questo round (isEnded=true)
+# La partita viene eliminata dal database dopo la validazione
 POST {{baseUrl}}/api/v1/demos/{{demoGameId}}/round/1/verify
 Content-Type: application/json
 
 {
-  "cardsIds": [1, 2, 3, 4]
+  "cardsIds": [13,17,35,47]
 }
 
-### DEMO 4. TENTATIVO DI SECONDO ROUND (dovrebbe dire che il gioco è finito)
-POST {{baseUrl}}/api/v1/demos/24/round/2/begin
+### DEMO 4. TENTATIVO DI SECONDO ROUND (dovrebbe dare errore: gioco finito)
+POST {{baseUrl}}/api/v1/demos/{{demoGameId}}/round/2/begin
 Content-Type: application/json
+
+### ============================================
+### SCENARIO PERDITA VITE - UTENTE AUTENTICATO ###
+### ============================================
+
+### ESEMPIO: Perdere tutte e 3 le vite
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/new
+Content-Type: application/json
+
+###
+@loseGameId = 1275
+
+### Round 1 - Risposta SBAGLIATA (vite: 3 -> 2)
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{loseGameId}}/round/1/begin
+Content-Type: application/json
+
+###
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{loseGameId}}/round/1/verify
+Content-Type: application/json
+
+{
+  "cardsIds": [99, 98, 97, 96]
+}
+
+### Round 2 - Risposta SBAGLIATA (vite: 2 -> 1)  
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{loseGameId}}/round/2/begin
+Content-Type: application/json
+
+###
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{loseGameId}}/round/2/verify
+Content-Type: application/json
+
+{
+  "cardsIds": [99, 98, 97, 96, 95]
+}
+
+### Round 3 - Risposta SBAGLIATA (vite: 1 -> 0, GAME OVER)
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{loseGameId}}/round/3/begin
+Content-Type: application/json
+
+###
+POST {{baseUrl}}/api/v1/users/{{userid}}/games/{{loseGameId}}/round/3/verify
+Content-Type: application/json
+
+{
+  "cardsIds": [99, 98, 97, 96, 95, 94]
+}
+
+### Verifica che il gioco sia finito (isEnded=true, livesRemaining=0)
+GET {{baseUrl}}/api/v1/users/{{userid}}/games
 

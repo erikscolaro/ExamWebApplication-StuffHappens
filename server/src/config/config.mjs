@@ -6,7 +6,7 @@ const __dirname = path.dirname(__filename);
 const APP_V1_BASE_URL ="/api/v1"
 
 const CONFIG = {
-  DB_NAME: path.join(__dirname, "../../data/database.sqlite"),
+  DB_NAME: path.join(__dirname, "../../data/database.db"),
   APP_PORT: 3001,
   APP_HOST: "localhost",
   ROUTES_V1: {

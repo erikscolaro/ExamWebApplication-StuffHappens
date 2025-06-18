@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Database path relative to server directory
-const dbPath = path.join(__dirname, '..', 'data', 'database.sqlite');
+const dbPath = path.join(__dirname, '..', 'data', 'database.db');
 
 console.log('Initializing database at:', dbPath);
 console.log('Current directory:', process.cwd());
@@ -79,13 +79,12 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
   // If CARDS table doesn't exist, create it (plural convention)
   if (!rows.find(row => row.name === 'CARDS')) {
     console.log('Creating CARDS table...');
-    
-    const createCardsTable = `
+      const createCardsTable = `
       CREATE TABLE CARDS (
         ID INTEGER PRIMARY KEY,
         NAME TEXT NOT NULL,
         IMAGEPATH TEXT NOT NULL,
-        MISERYINDEX INTEGER NOT NULL
+        MISERYINDEX REAL UNIQUE NOT NULL
       )
     `;
     
@@ -94,20 +93,19 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
         console.error('Error creating CARDS table:', err);
       } else {
         console.log('CARDS table created successfully');
-        
-        // Insert sample cards with misery index
+          // Insert sample cards with misery index equal to their ID (as requested)
         for (let i = 0; i < 50; i++) {
           const insertCard = `
             INSERT INTO CARDS (ID, NAME, IMAGEPATH, MISERYINDEX) 
             VALUES (?, ?, ?, ?)
           `;
-          // Generate random misery index between 1-10
-          const miseryIndex = Math.floor(Math.random() * 10) + 1;
+          // Misery index equals the card ID (as requested)
+          const miseryIndex = i;
           db.run(insertCard, [i, `Card ${i}`, `card${i}.jpg`, miseryIndex], (err) => {
             if (err) console.error(`Error inserting card ${i}:`, err);
           });
         }
-        console.log('50 cards inserted with misery indexes');
+        console.log('50 cards inserted with misery index equal to their ID');
       }
     });
   }
@@ -115,8 +113,7 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
   // If GAMES table doesn't exist, create it (plural convention)
   if (!rows.find(row => row.name === 'GAMES')) {
     console.log('Creating GAMES table...');
-    
-    const createGamesTable = `
+      const createGamesTable = `
       CREATE TABLE GAMES (
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         USERID INTEGER,
@@ -124,6 +121,7 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
         ROUND INTEGER DEFAULT 1,
         ISENDED INTEGER DEFAULT 0,
         ISDEMO INTEGER DEFAULT 0,
+        LIVESREMAINING INTEGER DEFAULT 3,
         FOREIGN KEY (USERID) REFERENCES USERS(ID)
       )
     `;
@@ -140,15 +138,13 @@ db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, rows) => {
   // If GAME_RECORDS table doesn't exist, create it (plural convention)
   if (!rows.find(row => row.name === 'GAME_RECORDS')) {
     console.log('Creating GAME_RECORDS table...');
-    
-    const createGameRecordsTable = `
+      const createGameRecordsTable = `
       CREATE TABLE GAME_RECORDS (
       ID INTEGER PRIMARY KEY AUTOINCREMENT,
       GAMEID INTEGER NOT NULL,
       CARDID INTEGER NOT NULL,
       ROUND INTEGER NOT NULL,
       WASGUESSED INTEGER,
-      TIMEDOUT INTEGER,
       REQUESTEDAT TEXT,
       RESPONDEDAT TEXT,
       FOREIGN KEY (GAMEID) REFERENCES GAMES(ID),

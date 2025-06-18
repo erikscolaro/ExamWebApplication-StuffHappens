@@ -70,8 +70,7 @@ export const getGamesByUser = (userid, areEnded = true) => {
       "SELECT * FROM GAMES WHERE USERID = ? AND ISENDED = ? ORDER BY CREATEDAT DESC";
     db.all(query, [userid, areEnded ? 1 : 0], (err, rows) => {
       if (err) reject(err); // error management done outside
-      else {
-        // Convert rows to GameDB objects
+      else {        // Convert rows to GameDB objects
         const games = rows.map(
           (row) =>
             new Game(
@@ -80,7 +79,8 @@ export const getGamesByUser = (userid, areEnded = true) => {
               row.CREATEDAT,
               row.ROUND,
               row.ISENDED,
-              row.ISDEMO
+              row.ISDEMO,
+              row.LIVESREMAINING
             )
         );
         resolve(games);
@@ -100,11 +100,11 @@ export const getGamesByUser = (userid, areEnded = true) => {
 export const createGame = (userId, createdAt, isDemo) => {
   return new Promise((resolve, reject) => {
     const query =
-      "INSERT INTO GAMES (USERID, CREATEDAT, ROUND, ISENDED, ISDEMO) VALUES (?, ?, ?, ?, ?)";
+      "INSERT INTO GAMES (USERID, CREATEDAT, ROUND, ISENDED, ISDEMO, LIVESREMAINING) VALUES (?, ?, ?, ?, ?, ?)";
     const userIdValue = isDemo ? null : userId;
     db.run(
       query,
-      [userIdValue, createdAt, 1, 0, isDemo ? 1 : 0],
+      [userIdValue, createdAt, 1, 0, isDemo ? 1 : 0, 3],
       function (err) {
         if (err) reject(err); // error management done outside
         else {
@@ -116,17 +116,18 @@ export const createGame = (userId, createdAt, isDemo) => {
 };
 
 /**
- * Aggiorna round e stato di un gioco
+ * Aggiorna round, stato e vite rimanenti di un gioco
  * @param {number} gameId - ID del gioco
  * @param {number} roundNum - Numero del round
  * @param {boolean} isEnded - true se il gioco è finito
+ * @param {number} livesRemaining - Vite rimanenti
  * @returns {Promise<number>} Numero di righe modificate
  * @throws {Error} Errori database
  */
-export const updateGame = (gameId, roundNum, isEnded) => {
+export const updateGame = (gameId, roundNum, isEnded, livesRemaining) => {
   return new Promise((resolve, reject) => {
-    const query = "UPDATE GAMES SET ROUND = ?, ISENDED = ? WHERE ID = ?";
-    db.run(query, [roundNum, isEnded ? 1 : 0, gameId], function (err) {
+    const query = "UPDATE GAMES SET ROUND = ?, ISENDED = ?, LIVESREMAINING = ? WHERE ID = ?";
+    db.run(query, [roundNum, isEnded ? 1 : 0, livesRemaining, gameId], function (err) {
       if (err) reject(err);
       else {
         resolve(this.changes);
@@ -147,14 +148,14 @@ export const getGameById = (gameId) => {
     db.get(query, [gameId], (err, row) => {
       if (err) reject(err);
       else if (row === undefined) resolve(false);
-      else {
-        const game = new Game(
+      else {        const game = new Game(
           row.ID,
           row.USERID,
           row.CREATEDAT,
           row.ROUND,
           row.ISENDED,
-          row.ISDEMO
+          row.ISDEMO,
+          row.LIVESREMAINING
         );
         resolve(game);
       }
@@ -218,8 +219,7 @@ export const getGameRecordsByGameId = (gameId) => {
     const query = "SELECT * FROM GAME_RECORDS WHERE GAMEID = ?";
     db.all(query, [gameId], (err, rows) => {
       if (err) reject(err); // error management done outside
-      else {
-        // Convert rows to GameRecord objects
+      else {        // Convert rows to GameRecord objects
         const records = rows.map(
           (row) =>
             new GameRecord(
@@ -229,7 +229,6 @@ export const getGameRecordsByGameId = (gameId) => {
               null,
               row.ROUND,
               row.WASGUESSED,
-              row.TIMEDOUT,
               row.REQUESTEDAT,
               row.RESPONDEDAT
             )
@@ -253,14 +252,13 @@ export const getGameRecordByGameIdAndRound = (gameId, round) => {
     db.get(query, [gameId, round], (err, row) => {
       if (err) reject(err); // error management done outside
       else if (row === undefined) resolve(null); // No record found
-      else {
-        const record = new GameRecord(
+      else {        const record = new GameRecord(
           row.ID,
           row.GAMEID,
           row.CARDID,
           null,
+          row.ROUND,
           row.WASGUESSED,
-          row.TIMEDOUT,
           row.REQUESTEDAT,
           row.RESPONDEDAT
         );
@@ -272,10 +270,10 @@ export const getGameRecordByGameIdAndRound = (gameId, round) => {
 
 /**
  * Crea un nuovo record di gioco
- * @param {number} gameId - ID del gioco * @param {number} cardId - ID della carta
+ * @param {number} gameId - ID del gioco
+ * @param {number} cardId - ID della carta
  * @param {number} round - Numero del round (default: 0)
  * @param {boolean|null} wasGuessed - true/false se carta indovinata, null se non ancora giocato
- * @param {boolean|null} timedOut - true/false se è scaduto il tempo, null se non ancora giocato
  * @param {string|null} requestedAt - Timestamp richiesta carta
  * @param {string|null} respondedAt - Timestamp risposta utente
  * @returns {Promise<number>} ID del nuovo record creato
@@ -286,16 +284,15 @@ export const createGameRecord = (
   cardId,
   round = 0,
   wasGuessed = null,
-  timedOut = null,
   requestedAt = null,
   respondedAt = null
 ) => {
   return new Promise((resolve, reject) => {
     const query =
-      "INSERT INTO GAME_RECORDS (GAMEID, CARDID, ROUND, WASGUESSED, TIMEDOUT,REQUESTEDAT, RESPONDEDAT) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      "INSERT INTO GAME_RECORDS (GAMEID, CARDID, ROUND, WASGUESSED, REQUESTEDAT, RESPONDEDAT) VALUES (?, ?, ?, ?, ?, ?)";
     db.run(
       query,
-      [gameId, cardId, round, wasGuessed, timedOut, requestedAt, respondedAt],
+      [gameId, cardId, round, wasGuessed, requestedAt, respondedAt],
       function (err) {
         if (err) reject(err); // error management done outside
         else {
@@ -307,9 +304,9 @@ export const createGameRecord = (
 };
 
 /**
- * Aggiorna un record di gioco esistente * @param {number} recordId - ID del record da aggiornare
+ * Aggiorna un record di gioco esistente
+ * @param {number} recordId - ID del record da aggiornare
  * @param {boolean} wasGuessed - true se carta indovinata, false altrimenti
- * @param {boolean} timedOut - true se è scaduto il tempo, false altrimenti
  * @param {string} requestedAt - Timestamp richiesta carta
  * @param {string} respondedAt - Timestamp risposta utente
  * @returns {Promise<number>} Numero di righe modificate
@@ -318,16 +315,15 @@ export const createGameRecord = (
 export const updateGameRecord = (
   recordId,
   wasGuessed,
-  timedOut,
   requestedAt,
   respondedAt
 ) => {
   return new Promise((resolve, reject) => {
     const query =
-      "UPDATE GAME_RECORDS SET WASGUESSED = ?, TIMEDOUT = ?, REQUESTEDAT = ?, RESPONDEDAT = ? WHERE ID = ?";
+      "UPDATE GAME_RECORDS SET WASGUESSED = ?, REQUESTEDAT = ?, RESPONDEDAT = ? WHERE ID = ?";
     db.run(
       query,
-      [wasGuessed, timedOut, requestedAt, respondedAt, recordId],
+      [wasGuessed, requestedAt, respondedAt, recordId],
       function (err) {
         if (err) reject(err);
         else {
@@ -401,4 +397,38 @@ export const getGamesWithRecordsAndCards = async (userid) => {
   } catch (error) {
     throw error;
   }
+};
+
+/**
+ * Elimina un gioco demo e tutti i suoi record associati
+ * @param {number} gameId - ID del gioco demo da eliminare
+ * @returns {Promise<boolean>} true se eliminato con successo, false altrimenti
+ * @throws {Error} Errori database
+ */
+export const deleteDemoGame = (gameId) => {
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      db.run("BEGIN TRANSACTION");
+      
+      // Prima elimina i record del gioco
+      db.run("DELETE FROM GAME_RECORDS WHERE GAMEID = ?", [gameId], function(err) {
+        if (err) {
+          db.run("ROLLBACK");
+          reject(err);
+          return;
+        }
+        
+        // Poi elimina il gioco stesso (solo se è demo)
+        db.run("DELETE FROM GAMES WHERE ID = ? AND ISDEMO = 1", [gameId], function(err) {
+          if (err) {
+            db.run("ROLLBACK");
+            reject(err);
+          } else {
+            db.run("COMMIT");
+            resolve(this.changes > 0);
+          }
+        });
+      });
+    });
+  });
 };
