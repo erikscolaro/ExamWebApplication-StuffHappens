@@ -276,7 +276,7 @@ export default function GamePage() {
       />
       <Container
         fluid
-        className="d-flex p-3 flex-column justify-content-center align-items-center gap-5" 
+        className="d-flex p-3 flex-column justify-content-center align-items-center gap-5"
         style={{
           width: "100%",
           height: "100%",
@@ -299,7 +299,9 @@ export default function GamePage() {
           <Col className="text-center gap-3 d-flex flex-column align-items-center">
             {game && (
               <LivesIndicator
-                livesRemaining={game.livesRemaining || 3}
+                livesRemaining={
+                  game.livesRemaining !== undefined ? game.livesRemaining : 3
+                }
                 maxLives={3}
               />
             )}
@@ -314,7 +316,8 @@ export default function GamePage() {
               }}
             >
               {game.isEnded
-                ? game.livesRemaining > 0
+                ? (!game.isDemo && game.livesRemaining > 0) ||
+                  (game.isDemo && game.livesRemaining === 3)
                   ? "YOU WON!"
                   : "YOU LOSE!"
                 : game.roundNum === 0

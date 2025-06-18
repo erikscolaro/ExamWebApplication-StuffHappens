@@ -5,9 +5,9 @@ import ErrorDTO from "../models/errors.mjs";
 
 const SERVER_URL = "http://localhost:3001";
 
-const handleApiError = (response) => {
+const handleApiError = async (response) => {
   if (response.ok) {
-    return response.json();
+    return await response.json();
   }
 
   return response
@@ -20,7 +20,8 @@ const handleApiError = (response) => {
       }
     })
     .catch(() => {
-      throw new Error(        `Server error: ${response.status} ${response.statusText}`
+      throw new Error(
+        `Server error: ${response.status} ${response.statusText}`
       );
     });
 };
@@ -92,7 +93,6 @@ const getGamesHistory = async (userId) => {
     method: "GET",
     credentials: "include",
   });
-
   const data = await handleApiError(response);
   return data.history.map((g) => Game.fromJSON(g));
 };
@@ -214,6 +214,14 @@ const getUserInfo = async () => {
   const response = await fetch(`${SERVER_URL}/api/v1/sessions/current`, {
     credentials: "include",
   });
+
+  // 401 is expected when no session exists, don't treat as error
+  if (response.status === 401) {
+    return {
+      authenticated: false,
+      user: null,
+    };
+  }
 
   const data = await handleApiError(response);
   return {

@@ -17,7 +17,7 @@ const CONFIG = {
     IMAGES_URL: "/images",
   },
   CORS_OPTIONS: {
-    origin: ["http://localhost:5173", "http://localhost:3000"], // Allow multiple origins for test
+    origin: ["http://localhost:5173"],
     optionsSuccessStatus: 200, // Fixed typo: was optionsSuccessState
     credentials: true,
   },

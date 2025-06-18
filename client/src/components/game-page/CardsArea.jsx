@@ -5,7 +5,13 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import CircleButton from "./CircleButton";
 import { Fragment } from "react";
 
-export default function CardsArea({ cards, selector, setSelector, roundStarted = true, showButtons = true }) {
+export default function CardsArea({
+  cards,
+  selector,
+  setSelector,
+  roundStarted = true,
+  showButtons = true,
+}) {
   return (
     <Container
       fluid
@@ -24,7 +30,10 @@ export default function CardsArea({ cards, selector, setSelector, roundStarted =
           overflowY: "hidden",
           scrollbarWidth: "thin",
           scrollbarColor: `${colors.background.accentDarkTransparent} transparent`,
-        }}      >        {showButtons && (
+        }}
+      >
+        {" "}
+        {showButtons && (
           <CircleButton
             key={0}
             id={0}
@@ -34,18 +43,18 @@ export default function CardsArea({ cards, selector, setSelector, roundStarted =
           />
         )}
         {cards.map((card, index) => (
-            <Fragment key={`fragment-${index}`}>
-              <CustomCard card={card} />              {showButtons && (
-                <CircleButton
-                  id={index + 1}
-                  actuallyPressed={selector}
-                  setPressed={setSelector}
-                  roundStarted={roundStarted}
-                />
-              )}
-            </Fragment>
-          ))
-        }
+          <Fragment key={`fragment-${index}`}>
+            <CustomCard card={card} />
+            {showButtons && (
+              <CircleButton
+                id={index + 1}
+                actuallyPressed={selector}
+                setPressed={setSelector}
+                roundStarted={roundStarted}
+              />
+            )}
+          </Fragment>
+        ))}
       </Row>
       <Row
         className="justify-content-between align-items-end"

@@ -1,5 +1,5 @@
 import { Col, Container, Nav, Navbar } from "react-bootstrap";
-import { useLocation } from "react-router";
+import { useLocation, Link } from "react-router";
 import { colors } from "../../colors.mjs";
 import CustomButton from "./CustomButton";
 import { useContext } from "react";
@@ -34,7 +34,8 @@ function NavHeader() {
       >
         <Col className="d-flex align-items-center nowrap gap-2">
           <Navbar.Brand
-            href="/"
+            as={Link}
+            to="/"
             className="navbar-brand"
             style={{
               color: colors.text.dark,
@@ -55,18 +56,26 @@ function NavHeader() {
                 fontWeight: "bold",
               }}
             >
-              <Nav.Link href="/">Instructions</Nav.Link>
+              <Nav.Link as={Link} to="/">
+                Instructions
+              </Nav.Link>
               {user ? (
                 <>
-                  <Nav.Link href="/play">Play</Nav.Link>
-                  <Nav.Link href="/profile">Profile</Nav.Link>
+                  <Nav.Link as={Link} to="/play">
+                    Play
+                  </Nav.Link>
+                  <Nav.Link as={Link} to="/profile">
+                    Profile
+                  </Nav.Link>
                 </>
               ) : (
-                <Nav.Link href="/demo">Demo</Nav.Link>
+                <Nav.Link as={Link} to="/demo">
+                  Demo
+                </Nav.Link>
               )}
             </Nav>
           </Navbar.Collapse>
-        </Col>{" "}
+        </Col>
         {user ? (
           <Col className="d-flex justify-content-end align-items-center nowrap">
             <Navbar.Text className="me-3">Hi, {user.username}!</Navbar.Text>

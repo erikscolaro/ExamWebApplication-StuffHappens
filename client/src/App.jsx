@@ -17,12 +17,15 @@ function App() {
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
     const checkUserSession = async () => {
       try {
         setIsLoading(true);
         const userInfo = await API.getUserInfo();
-        setUser(userInfo.user);
+        if (!userInfo.authenticated) {
+          setUser(null);
+        }
       } catch {
         setUser(null);
       } finally {
@@ -42,7 +45,7 @@ function App() {
         type: "success",
       });
     } catch (err) {
-      setMessage({ msg: err, type: "danger" });
+      setMessage({ msg: err.message || err.toString(), type: "danger" });
     }
   };
 
@@ -52,7 +55,7 @@ function App() {
       setUser(null);
       setMessage({ msg: "Logout successful!", type: "info" });
     } catch (err) {
-      setMessage({ msg: err, type: "danger" });
+      setMessage({ msg: err.message || err.toString(), type: "danger" });
     }
   };
 
@@ -63,7 +66,8 @@ function App() {
       <Routes>
         <Route
           element={<DefaultLayout message={message} setMessage={setMessage} />}
-        >          <Route path="/" element={<HomePage />} />
+        >
+          <Route path="/" element={<HomePage />} />
           <Route
             path="/login"
             element={
@@ -76,13 +80,7 @@ function App() {
           />
           <Route
             path="/play"
-            element={
-              user ? (
-                <GamePage />
-              ) : (
-                <Navigate replace to="/" />
-              )
-            }
+            element={user ? <GamePage /> : <Navigate replace to="/" />}
           />
           <Route path="/demo" element={<GamePage />} />
           <Route path="/profile" element={<ProfilePage />} />

@@ -36,7 +36,7 @@ export const validateCardIds = [
     .isArray({ min: 3, max: 6 })
     .withMessage('cardsIds must be an array with 3 to 6 elements')
     .custom((value) => {
-      if (!value.every(id => Number.isInteger(id) && id > 0)) {
+      if (!value.every(id => Number.isInteger(id) && id >= 1)) {
         throw ErrorDTO.badRequest("cardsIds must contain only positive integers");
       }
       return true;

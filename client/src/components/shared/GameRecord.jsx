@@ -5,34 +5,18 @@ import dayjs from "dayjs";
 export default function GameRecord({ game }) {
   // Formats a date string to DD/MM/YYYY HH:mm format
   const formatDate = (date) => dayjs(date).format("DD/MM/YYYY HH:mm");
-  // Determines if the game is won based on demo/normal mode rules
+  // Determines if the game is won based on game rules
   const isGameWon = () => {
     if (!game.isEnded) return false;
-
-    if (game.isDemo) {
-      const demoRound = game.records.find((r) => r.round === 1);
-      return demoRound && demoRound.wasGuessed;
-    } else {
-      const guessedCards = game.records.filter((r) => r.wasGuessed === true);
-      return guessedCards.length >= 6;
-    }
+    const guessedCards = game.records.filter((r) => r.wasGuessed === true);
+    return guessedCards.length >= 6;
   };
+
   // Returns the number of correctly guessed cards
   const getGuessedCardsCount = () => {
     if (!game.records) return 0;
-    
-    if (game.isDemo) {
-      // For demo games, count only cards guessed in round > 0
-      return game.records.filter((r) => r.round > 0 && r.wasGuessed === true).length;
-    } else {
-      // For regular games, count all guessed cards
-      return game.records.filter((r) => r.wasGuessed === true).length;
-    }
-  };
-
-  // Returns the target number of cards to guess for victory
-  const getTargetCardsCount = () => {
-    return game.isDemo ? 1 : 6;
+    return game.records.filter((r) => r.wasGuessed === true && r.round !== 0)
+      .length;
   };
 
   return (
@@ -62,16 +46,10 @@ export default function GameRecord({ game }) {
             </Col>
             <Col style={{ textAlign: "right" }}>
               <div>
-                {game.isEnded ? (
-                  isGameWon() ? (
-                    <span style={{ color: colors.logic.success }}>Won 🏆</span>
-                  ) : (
-                    <span style={{ color: colors.logic.error }}>Lost 😢</span>
-                  )
+                {isGameWon() ? (
+                  <span style={{ color: colors.logic.success }}>Won 🏆</span>
                 ) : (
-                  <span style={{ color: colors.text.light }}>
-                    In Progress ⏳
-                  </span>
+                  <span style={{ color: colors.logic.error }}>Lost 😢</span>
                 )}
               </div>
               <div
@@ -81,19 +59,8 @@ export default function GameRecord({ game }) {
                   marginTop: "0.2rem",
                 }}
               >
-                Cards: {getGuessedCardsCount()}/{getTargetCardsCount()}
+                Cards: {getGuessedCardsCount()}/{3}
               </div>
-              {!game.isDemo && (
-                <div
-                  style={{
-                    fontSize: "0.75rem",
-                    color: colors.text.light,
-                    marginTop: "0.1rem",
-                  }}
-                >
-                  Lives: {game.livesRemaining || 0}/3
-                </div>
-              )}
             </Col>
           </Row>
           {game.records && game.records.length > 0 && (
@@ -121,7 +88,6 @@ export default function GameRecord({ game }) {
                         }}
                       >
                         <span>{r.card.name}</span>
-                        <span style={{ color: colors.logic.success }}>✅</span>
                       </div>
                       {i < array.length - 1 && (
                         <hr
@@ -167,7 +133,7 @@ export default function GameRecord({ game }) {
                                 {r.card?.name || "Unknown card"}
                               </span>
                               <span>
-                                {r.wasGuessed && r.round !== 0 ? (
+                                {r.wasGuessed ? (
                                   <span style={{ color: colors.logic.success }}>
                                     ✅
                                   </span>
@@ -186,7 +152,7 @@ export default function GameRecord({ game }) {
                                   opacity: 0.3,
                                 }}
                               />
-                            )}{" "}
+                            )}
                           </div>
                         ))
                     : null}
