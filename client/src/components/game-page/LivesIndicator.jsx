@@ -2,7 +2,6 @@ import { Container, Row, Col } from "react-bootstrap";
 import { colors } from "../../colors.mjs";
 
 export default function LivesIndicator({ livesRemaining = 3, maxLives = 3 }) {
-
   const dotStyle = (isAlive) => ({
     width: "20px",
     height: "20px",
@@ -38,7 +37,7 @@ export default function LivesIndicator({ livesRemaining = 3, maxLives = 3 }) {
     fontSize: "1.2rem",
     whiteSpace: "nowrap",
   };
-  
+
   return (
     <Container style={containerStyle}>
       <Row className="p-0 justify-content-center align-items-center gap-2 px-3 py-1">

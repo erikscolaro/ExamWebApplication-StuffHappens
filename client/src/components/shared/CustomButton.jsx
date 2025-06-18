@@ -2,14 +2,15 @@ import { Button } from "react-bootstrap";
 import { Link } from "react-router";
 import { colors } from "../../colors.mjs";
 
-export default function CustomButton({ 
-  label, 
-  linkTo, 
-  submit, 
-  variant = "outline-light",  style,
+export default function CustomButton({
+  label,
+  linkTo,
+  submit,
+  variant = "outline-light",
+  style,
   onMouseEnter,
   onMouseLeave,
-  ...otherProps 
+  ...otherProps
 }) {
   const defaultStyle = {
     borderRadius: "9999px",
@@ -40,7 +41,7 @@ export default function CustomButton({
       onMouseLeave={onMouseLeave || defaultOnMouseLeave}
       as={linkTo ? Link : undefined}
       to={linkTo}
-      type={linkTo ? undefined : (submit ? "submit" : "button")}
+      type={linkTo ? undefined : submit ? "submit" : "button"}
       {...otherProps}
     >
       {label}

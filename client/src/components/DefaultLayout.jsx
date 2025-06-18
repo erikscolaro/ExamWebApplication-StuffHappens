@@ -21,7 +21,7 @@ function DefaultLayout(props) {
           top: 0,
         }}
       >
-        <NavHeader        />
+        <NavHeader />
         <Container
           fluid
           className="d-flex flex-column align-items-center p-2 pt-3"

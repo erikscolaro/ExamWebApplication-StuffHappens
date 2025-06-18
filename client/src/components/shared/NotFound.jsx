@@ -12,8 +12,8 @@ function NotFound() {
           <Alert variant="warning">
             <Alert.Heading>404 - Page Not Found</Alert.Heading>
             <p>
-              The page you are looking for doesn't exist. 
-              You may have mistyped the address or the page may have moved.
+              The page you are looking for doesn't exist. You may have mistyped
+              the address or the page may have moved.
             </p>
             <hr />
             <div className="mb-0">

@@ -1,7 +1,8 @@
 import { Alert, Container } from "react-bootstrap";
 import { colors } from "../../colors.mjs";
 
-function CustomAlert({ message, setMessage }) {  if (!message || !message.msg) {
+function CustomAlert({ message, setMessage }) {
+  if (!message || !message.msg) {
     return null;
   }
 

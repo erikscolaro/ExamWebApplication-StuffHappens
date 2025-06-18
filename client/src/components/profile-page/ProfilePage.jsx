@@ -32,12 +32,14 @@ export default function ProfilePage() {
             (a, b) => b.createdAt.valueOf() - a.createdAt.valueOf()
           )
         );
-      } catch (error) {        console.error("Error loading games:", error);
+      } catch (error) {
+        console.error("Error loading games:", error);
         setGames([]);
       } finally {
         setLoading(false);
       }
-    };    loadGames();
+    };
+    loadGames();
   }, [user, navigate]);
 
   if (isLoading || loading) {
@@ -62,7 +64,8 @@ export default function ProfilePage() {
             marginBottom: "2rem",
           }}
         >
-          Hi {user.username}, here are all your games        </h2>
+          Hi {user.username}, here are all your games{" "}
+        </h2>
 
         {games.length === 0 ? (
           <div style={{ color: colors.text.light, textAlign: "center" }}>
