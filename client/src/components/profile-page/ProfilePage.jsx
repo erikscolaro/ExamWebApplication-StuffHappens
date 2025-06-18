@@ -51,9 +51,7 @@ export default function ProfilePage() {
       fluid
       className="p-3"
       style={{
-        minHeight: "100vh",
         paddingTop: "1rem",
-        overflow: "visible",
       }}
     >
       <div style={{ width: "100%", maxWidth: "100%" }}>
