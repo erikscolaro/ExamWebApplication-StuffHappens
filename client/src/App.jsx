@@ -17,11 +17,13 @@ function App() {
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     const checkUserSession = async () => {
       try {
         setIsLoading(true);
+        if (!user) return;
+        // Check if the user is authenticated
         const userInfo = await API.getUserInfo();
         if (!userInfo.authenticated) {
           setUser(null);
@@ -34,7 +36,7 @@ function App() {
     };
 
     checkUserSession();
-  }, []);
+  }, [user]);
 
   const handleLogin = async (credentials) => {
     try {

@@ -78,7 +78,9 @@ function NavHeader() {
         </Col>
         {user ? (
           <Col className="d-flex justify-content-end align-items-center nowrap">
-            <Navbar.Text className="me-3">Hi, {user.username}!</Navbar.Text>
+            <Navbar.Text className="me-3 d-none d-sm-block">
+              Hi, {user.username}!
+            </Navbar.Text>
             <CustomButton linkTo={"/"} label="Logout" onClick={handleLogout} />
           </Col>
         ) : (

@@ -278,14 +278,11 @@ export default function GamePage() {
         fluid
         className="d-flex p-3 flex-column align-items-center gap-5"
         style={{
-          width: "100%",
-          minHeight: "100%",
+          paddingTop: "5vh",
+          paddingBottom: "5vh",
         }}
       >
-        <Row
-          className="justify-content-between align-items-center"
-          style={{ width: "100%" }}
-        >
+        <Row className="justify-content-between align-items-center w-100">
           <Col>
             {!game.isEnded && (
               <CountdownTimer

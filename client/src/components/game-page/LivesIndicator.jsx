@@ -29,18 +29,18 @@ export default function LivesIndicator({ livesRemaining = 3, maxLives = 3 }) {
     boxShadow: `0 4px 8px ${colors.background.gray_700}`,
     width: "fit-content",
     gap: "8px",
+    minWidth: "160px",
   };
 
   const labelStyle = {
     color: colors.text.accent,
     fontFamily: "'Bangers', sans-serif",
     fontSize: "1.2rem",
-    whiteSpace: "nowrap",
   };
 
   return (
     <Container style={containerStyle}>
-      <Row className="p-0 justify-content-center align-items-center gap-2 px-3 py-1">
+      <Row className="d-flex p-0 justify-content-center align-items-center gap-2 px-3 py-1">
         <Col className="p-0">
           <span style={labelStyle}>LIVES:</span>
         </Col>

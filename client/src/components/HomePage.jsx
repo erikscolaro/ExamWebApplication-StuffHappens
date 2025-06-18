@@ -16,14 +16,13 @@ function HomePage() {
   };
 
   const { user } = useContext(UserContext);
-
   return (
     <Container
       fluid
-      className="p-3 d-flex flex-column align-items-center"
+      className="d-flex flex-column align-items-center justify-content-center"
       style={{
-        minHeight: "100%",
         width: "80%",
+        minHeight: "100%",
       }}
     >
       <div>
