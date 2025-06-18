@@ -1,13 +1,10 @@
 import {
-  Button,
   Col,
   Container,
   Nav,
   Navbar,
-  NavDropdown,
-  Row,
 } from "react-bootstrap";
-import { Link, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { colors } from "../../colors.mjs";
 import CustomButton from "./CustomButton";
 
@@ -37,51 +34,57 @@ function NavHeader(props) {
         }}
       >
         <Col className="d-flex align-items-center nowrap gap-2">
-        <Navbar.Brand
-          href="/"
-          className="navbar-brand"
-          style={{
-            color: colors.text.dark,
-            fontSize: "2rem",
-            fontFamily: "'Bangers', cursive",
-          }}        >
-          Stuff Happens!
-        </Navbar.Brand>
-
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse>
-          <Nav
-            activeKey={page}
-            variant="underline"
+          <Navbar.Brand
+            href="/"
+            className="navbar-brand"
             style={{
-              fontSize: "1rem",
-              fontWeight: "bold",
+              color: colors.text.dark,
+              fontSize: "2rem",
+              fontFamily: "'Bangers', cursive",
             }}
-          >            <Nav.Link href="/">Instructions</Nav.Link>            {props.loggedIn ? (
-              <>
-                <Nav.Link href="/play">Play</Nav.Link>
-                <Nav.Link href="/profile">Profile</Nav.Link>
-              </>
-            ) : (
-              <Nav.Link href="/demo">Demo</Nav.Link>
-            )}
-          </Nav>
-        </Navbar.Collapse>
+          >
+            Stuff Happens!
+          </Navbar.Brand>
+
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse>
+            <Nav
+              activeKey={page}
+              variant="underline"
+              style={{
+                fontSize: "1rem",
+                fontWeight: "bold",
+              }}
+            >
+              {" "}
+              <Nav.Link href="/">Instructions</Nav.Link>{" "}
+              {props.loggedIn ? (
+                <>
+                  <Nav.Link href="/play">Play</Nav.Link>
+                  <Nav.Link href="/profile">Profile</Nav.Link>
+                </>
+              ) : (
+                <Nav.Link href="/demo">Demo</Nav.Link>
+              )}
+            </Nav>
+          </Navbar.Collapse>
         </Col>
         {props.loggedIn ? (
-            <Col className="d-flex justify-content-end align-items-center nowrap">
-            <Navbar.Text className="me-3">              Hi, {props.user.username}!
+          <Col className="d-flex justify-content-end align-items-center nowrap">
+            <Navbar.Text className="me-3">
+              {" "}
+              Hi, {props.user.username}!
             </Navbar.Text>
             <CustomButton
               linkTo={"/"}
               label="Logout"
               onClick={props.handleLogout}
             />
-            </Col>
+          </Col>
         ) : (
           <Col className="d-flex justify-content-end align-items-center nowrap">
-          <CustomButton linkTo={"login"} label="Login" />
-        </Col>
+            <CustomButton linkTo={"login"} label="Login" />
+          </Col>
         )}
       </Container>
     </Navbar>

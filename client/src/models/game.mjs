@@ -11,7 +11,6 @@ export class Game {
     this.livesRemaining = livesRemaining;
     this.records = records;
   }
-
   getCardsIdsOrdered() {
     // Include only:
     // 1. Cards from previous rounds that were guessed correctly (wasGuessed = true)

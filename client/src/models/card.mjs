@@ -1,8 +1,8 @@
 export class Card {
-  constructor(id, name, imageFilename, miseryIndex){
+  constructor(id, name, imagePath, miseryIndex){
     this.id = id;
     this.name = name;
-    this.imageFilename = imageFilename;
+    this.imagePath = imagePath;
     this.miseryIndex = miseryIndex;
   }
 
@@ -10,7 +10,7 @@ export class Card {
     return {
       id: this.id,
       name: this.name,
-      imageFilename: this.imageFilename,
+      imageFilename: this.imagePath,
       miseryIndex: this.miseryIndex,
     };
   }
@@ -19,7 +19,7 @@ export class Card {
     return {
       id: this.id,
       name: this.name,
-      imageFilename: this.imageFilename,
+      imageFilename: this.imagePath,
     };
   }
 

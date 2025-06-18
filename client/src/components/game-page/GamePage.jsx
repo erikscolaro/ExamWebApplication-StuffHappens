@@ -10,6 +10,8 @@ import NewCardArea from "./NewCardArea";
 import CountdownTimer from "./CountdownTimer";
 import GameEndModal from "./GameEndModal";
 import { Game } from "../../models/game.mjs";
+import { Card } from "../../models/card.mjs";
+import LivesIndicator from "./LivesIndicator";
 
 function getCardsIdsOrdered(game) {
   if (!game || !game.records) return [];
@@ -21,6 +23,46 @@ function getCardsIdsOrdered(game) {
       (card) => card.miseryIndex !== undefined && card.miseryIndex !== null
     )
     .sort((a, b) => a.miseryIndex - b.miseryIndex);
+}
+
+/**
+ * Adds or updates a game record for a specific round
+ * @param {Game} game - The game object to update
+ * @param {Card} card - The card played
+ * @param {number} round - The round number
+ * @param {boolean} wasGuessed - Whether the answer was correct
+ * @param {string} requestedAt - When the card was requested
+ * @param {string} respondedAt - When the answer was submitted
+ */
+function addOrUpdateRecord(
+  game,
+  card,
+  round,
+  wasGuessed,
+  requestedAt = null,
+  respondedAt = null
+) {
+  const existingRecordIndex = game.records.findIndex((r) => r.round === round);
+
+  const gameRecord = {
+    id: null, // id - not needed on frontend
+    gameId: game.id,
+    cardId: card ? card.id : null,
+    card: card,
+    round: round,
+    wasGuessed: wasGuessed,
+    timedOut: false, // assume false for now
+    requestedAt: requestedAt || new Date().toISOString(),
+    respondedAt: respondedAt || new Date().toISOString(),
+  };
+
+  if (existingRecordIndex >= 0) {
+    // Update existing record
+    game.records[existingRecordIndex] = gameRecord;
+  } else {
+    // Add new record
+    game.records.push(gameRecord);
+  }
 }
 
 export default function GamePage({ isLogged, user }) {
@@ -39,17 +81,27 @@ export default function GamePage({ isLogged, user }) {
     setCountdownKey((prevKey) => prevKey + 1);
     setTimerIsPlaying(true);
   };
-
   const sendAnswer = async () => {
     setTimerIsPlaying(false);
 
     let cards = getCardsIdsOrdered(game);
-    cards.splice(selector, 0, nextCard);
-    const cardIds = cards.map((c) => c.id);
-
-    try {
-      let result = null;
-      if (isLogged) {
+    
+    // If user has selected a position, insert the new card
+    if (selector !== null && selector !== undefined) {
+      cards.splice(selector, 0, nextCard);
+    }
+    // If no selection (selector is null), send only existing cards (timeout/no answer)
+    
+    const cardIds = cards.map((c) => c.id);try {
+      console.log("[VERIFY ANSWER] Request params:", {
+        userId: user?.id,
+        gameId: game?.id,
+        roundCurrent: roundCurrent,
+        cardIds: cardIds,
+        isLogged: isLogged
+      });
+      
+      let result = null;      if (isLogged) {
         result = await API.checkAnswerGame(
           user.id,
           game.id,
@@ -59,9 +111,40 @@ export default function GamePage({ isLogged, user }) {
       } else {
         result = await API.checkAnswerDemo(game.id, roundCurrent, cardIds);
       }
-      setRoundResult(result);
+      
+      console.log("[VERIFY ANSWER] Server response:", result);
+
+      // Extract isCorrect from gameRecord
+      const isCorrect =
+        result.gameRecord && result.gameRecord.wasGuessed === true;
+
+      setRoundResult({
+        ...result,
+        isCorrect: isCorrect, // Add isCorrect for backward compatibility with modal
+      });
+      // Update game object with the response data and add the game record
+      setGame((prevGame) => {
+        const updatedGame = { ...prevGame };
+
+        // Update lives and ended status from server response
+        updatedGame.livesRemaining = result.livesRemaining;
+        updatedGame.isEnded = result.isEnded;        // Add the game record - only if the answer was correct
+        if (result.gameRecord && result.gameRecord.card) {
+          // Correct answer: use the card with misery index from server
+          addOrUpdateRecord(
+            updatedGame,
+            Card.fromJSON(result.gameRecord.card),
+            roundCurrent,
+            true, // wasGuessed = true
+            result.gameRecord.requestedAt,
+            result.gameRecord.respondedAt
+          );        }
+        // If answer was wrong (result.gameRecord.card is null), don't save any record
+
+        return updatedGame;
+      });
+
       if (result.isEnded === true) {
-        setGame((prevGame) => ({ ...prevGame, isEnded: result.isEnded }));
         setShowGameEndModal(true);
       } else {
         setShowModal(true);
@@ -80,9 +163,12 @@ export default function GamePage({ isLogged, user }) {
       shouldRepeat: false,
       delay: 0,
     };
-  };
+  };  const handleGameAction = async () => {
+    // Don't allow actions if game is ended
+    if (game?.isEnded) {
+      return;
+    }
 
-  const handleGameAction = async () => {
     if (game.roundNum === 0) {
       setRoundCurrent(1);
     } else {
@@ -110,6 +196,7 @@ export default function GamePage({ isLogged, user }) {
         } else {
           result = await API.createDemoGame();
         }
+        console.log("[GAME CREATION] Server response:", result);
         setGame(Game.fromJSON(result));
         setRoundCurrent(0);
         setCountdownKey((prevKey) => prevKey + 1);
@@ -125,36 +212,50 @@ export default function GamePage({ isLogged, user }) {
       setGameIsPlaying(true);
       initializeGame();
     }
-  }, [user, isLogged, roundCurrent, gameIsPlaying]);
-
-  useEffect(() => {
+  }, [user, isLogged, roundCurrent, gameIsPlaying]);  useEffect(() => {
     const fetchNextRound = async () => {
       try {
+        console.log("[DRAW CARD] Request params:", {
+          userId: user?.id,
+          gameId: game?.id,
+          roundCurrent: roundCurrent,
+          isLogged: isLogged
+        });
+        
         let result = null;
         if (isLogged) {
           result = await API.nextRoundGame(user.id, game.id, roundCurrent);
         } else {
           result = await API.nextRoundDemo(game.id, roundCurrent);
         }
-        setGame(Game.fromJSON(result.game));
+        console.log("[DRAW CARD] Server response:", result);
+        setGame((prevGame) => {
+          const newGameData = Game.fromJSON(result.game);
+          // Preserve existing records and update only the game state properties
+          return {
+            ...prevGame,
+            roundNum: newGameData.roundNum,
+            isEnded: newGameData.isEnded,
+            livesRemaining: newGameData.livesRemaining,            // Keep existing records - don't overwrite with empty array from server
+          };
+        });
         setNextCard(result.nextCard);
         startTimer();
       } catch (error) {
         console.error("Error fetching next round:", error);
         throw error;
       }
-    };
-
-    if (
+    };    if (
       roundCurrent === 0 ||
       !game ||
+      !game.id ||
       !roundCurrent ||
-      roundCurrent == game.roundNum
+      roundCurrent == game.roundNum ||
+      game.isEnded // Don't fetch next round if game is ended
     )
       return;
     fetchNextRound();
   }, [roundCurrent, game, isLogged, user]);
-
   if (!game) {
     return (
       <Container
@@ -173,8 +274,7 @@ export default function GamePage({ isLogged, user }) {
           <span className="visually-hidden">Loading...</span>
         </div>
       </Container>
-    );
-  }
+    );  }
 
   return (
     <>
@@ -218,8 +318,15 @@ export default function GamePage({ isLogged, user }) {
               isPlaying={timerIsPlaying}
               onComplete={handleCountdownComplete}
             />
-          </Col>
+          </Col>{" "}
           <Col className="text-center">
+            {/* Widget delle vite */}
+            {game && (
+              <LivesIndicator
+                livesRemaining={game.livesRemaining || 3}
+                maxLives={3}
+              />
+            )}
             <div
               style={{
                 padding: "15px 25px",
@@ -238,10 +345,11 @@ export default function GamePage({ isLogged, user }) {
               >
                 {game.roundNum === 0 ? "READY ?" : `ROUND ${game.roundNum}`}
               </h2>
-            </div>
+            </div>{" "}
             <div
               style={{
                 transition: "transform 0.2s ease",
+                marginBottom: "20px",
               }}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.transform = "scale(1.05)")
@@ -250,8 +358,9 @@ export default function GamePage({ isLogged, user }) {
                 (e.currentTarget.style.transform = "scale(1)")
               }
             >
+              {" "}
               <CustomButton
-                label={game.roundNum === 0 ? "Start Game" : "Submit Solution"}
+                label={!nextCard ? "Start Game" : "Submit Solution"}
                 onClick={handleGameAction}
                 variant="primary"
               />

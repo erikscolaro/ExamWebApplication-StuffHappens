@@ -1,6 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useState, useEffect } from "react";
-import { Routes, Route, Navigate, Outlet } from "react-router";
+import { Routes, Route, Navigate } from "react-router";
 import API from "./api/api.mjs";
 
 import DefaultLayout from "./components/DefaultLayout";
@@ -15,15 +15,18 @@ function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkUserSession = async () => {
       try {
-        const userInfo = await API.getUserInfo();
-        setUser(userInfo.user);
-        setLoggedIn(true);
+        setIsLoading(true);
+        await API.getUserInfo();
       } catch {
         setLoggedIn(false);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -33,22 +36,25 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       const userResponse = await API.logIn(credentials);
-      setLoggedIn(true);      setMessage({
+      setLoggedIn(true);
+      setUser(userResponse.user);
+      setMessage({
         msg: `Welcome, ${userResponse.user.username}!`,
         type: "success",
       });
-      setUser(userResponse.user);
     } catch (err) {
       setMessage({ msg: err, type: "danger" });
     }
   };
+
   const handleLogout = async () => {
     try {
       await API.logOut();
       setLoggedIn(false);
-      setUser(null);      setMessage({ msg: "Logout successful!", type: "info" });    } catch (err) {
-      console.error("Error during logout:", err);
-      setMessage({ msg: "Error during logout", type: "danger" });
+      setUser(null);
+      setMessage({ msg: "Logout successful!", type: "info" });
+    } catch (err) {
+      setMessage({ msg: err, type: "danger" });
     }
   };
 
@@ -67,7 +73,6 @@ function App() {
         }
       >
         <Route path="/" element={<HomePage loggedIn={loggedIn} />} />
-
         <Route
           path="/login"
           element={
@@ -78,22 +83,31 @@ function App() {
             )
           }
         />
-
-        {/* Protected Routes */}
         <Route
           path="/play"
-          element={<GamePage user={user} isLogged={loggedIn} />}
-        />        <Route
-          path="/demo"
-          element={<GamePage isLogged={false} />}
-        />
-          <Route 
-          path="/profile" 
           element={
-              <ProfilePage user={user} />
-          } 
+            isLoading ? (
+              <div>Loading...</div>
+            ) : loggedIn ? (
+              <GamePage user={user} isLogged={loggedIn} />
+            ) : (
+              <Navigate replace to="/" />
+            )
+          }
         />
-
+        <Route path="/demo" element={<GamePage isLogged={false} />} />
+        <Route
+          path="/profile"
+          element={
+            isLoading ? (
+              <div>Loading...</div>
+            ) : loggedIn ? (
+              <ProfilePage user={user} />
+            ) : (
+              <Navigate replace to="/" />
+            )
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

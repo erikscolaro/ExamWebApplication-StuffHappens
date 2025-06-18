@@ -6,7 +6,8 @@ import CustomAlert from "./shared/CustomAlert";
 
 function DefaultLayout(props) {
   return (
-    <>      {props.message && props.message.msg && (
+    <>
+      {props.message && props.message.msg && (
         <CustomAlert message={props.message} setMessage={props.setMessage} />
       )}
       <Container

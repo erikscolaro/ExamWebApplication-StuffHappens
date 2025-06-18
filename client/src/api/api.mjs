@@ -67,7 +67,7 @@ const nextRoundDemo = async (gameId, roundId) => {
  * @param {string} gameId - The unique identifier of the demo game
  * @param {string} roundId - The unique identifier of the round
  * @param {string[]} cardIds - Array of card IDs representing the user's answer
- * @return {Promise<{isCorrect: boolean, correctOrder?: number[]}>} A promise that resolves to the answer verification result
+ * @return {Promise<{gameRecord: object, isEnded: boolean, livesRemaining: number}>} A promise that resolves to the answer verification result with GameRecord, end status and lives
  * @throws {ErrorDTO} Throws structured error from server
  */
 const checkAnswerDemo = async (gameId, roundId, cardIds) => {
@@ -146,15 +146,14 @@ const nextRoundGame = async (userId, gameId, roundId) => {
 };
 
 /**
- * Saves the user's answer for a game round by submitting selected card IDs.
- * Makes a POST request to check the user's answer against the correct solution.
+ * Saves the user's answer for a game round by submitting selected card IDs. * Makes a POST request to check the user's answer against the correct solution.
  *
  * @async
  * @function checkAnswerGame
  * @param {string} gameId - The unique identifier of the game
  * @param {string} roundId - The unique identifier of the round
  * @param {string[]} cardIds - Array of card IDs representing the user's answer
- * @returns {Promise<{isCorrect: boolean, correctOrder?: number[]}>} A promise that resolves to the answer verification result
+ * @returns {Promise<{gameRecord: object, isEnded: boolean, livesRemaining: number}>} A promise that resolves to the answer verification result with GameRecord, end status and lives
  * @throws {ErrorDTO} Throws structured error from server
  */
 const checkAnswerGame = async (userId, gameId, roundId, cardIds) => {

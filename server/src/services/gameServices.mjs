@@ -77,7 +77,7 @@ export async function createNewGameWithSetup(
  * @param {Game} game - The game object
  * @returns {Promise<Game>} Updated game object
  */
-export async function checkAndUpdateGameState(game) {
+export async function checkAndUpdateGameEnding(game) {
   if (game.isEnded) {
     return game;
   }
@@ -95,12 +95,10 @@ export async function checkAndUpdateGameState(game) {
     ).length;
     shouldEnd = game.livesRemaining <= 0 || correctGuesses >= 6;
   }
-
   if (shouldEnd) {
     game.isEnded = true;
-  } else {
-    game.roundNum += 1;
   }
+  // Note: roundNum is only incremented when drawing cards, not when verifying answers
 
   await dao.updateGame(game.id, game.roundNum, game.isEnded, game.livesRemaining);
   return game;
@@ -186,7 +184,7 @@ async function validateGameAccess(gameId, isDemo = null, userId = null) {
  * @param {number} roundId - The round ID
  * @param {boolean|null} isDemo - Whether this is a demo game (null to skip validation)
  * @param {number|null} userId - The user ID (null for demo games)
- * @returns {Promise<Object>} Response object with game and nextCard
+ * @returns {Promise<Object>} Response object with game (without records) and nextCard
  * @throws {ErrorDTO} If game is not found, ended, or in wrong round
  */
 export async function handleDrawCard(
@@ -196,53 +194,73 @@ export async function handleDrawCard(
   userId = null
 ) {
   // Validate game access and get game object
-  const game = await validateGameAccess(gameId, isDemo, userId);
-
-  // Check if the game is in a valid state to draw a card
+  const game = await validateGameAccess(gameId, isDemo, userId);  // Check if the game is in a valid state to draw a card
   if (game.isEnded) {
     throw ErrorDTO.badRequest(`Game with ID ${gameId} has already ended`);
-  } else if (parseInt(game.roundNum) != parseInt(roundId)) {
+  }
+  
+  const currentRound = parseInt(game.roundNum);
+  const requestedRound = parseInt(roundId);
+  
+  // For drawing a card, we expect to be asked for the next round
+  if (requestedRound !== currentRound + 1) {
     throw ErrorDTO.badRequest(
-      `Game with ID ${gameId} is not in round ${roundId}`
+      `Game with ID ${gameId} is in round ${currentRound}, cannot draw card for round ${requestedRound}`
     );
   }
 
-  // Check if there's already a card for this round
-  let nextCardRecord = game.records.find(
-    (record) => record.round === game.roundNum
+  // Increment the round number
+  game.roundNum = requestedRound;
+  await dao.updateGame(gameId, game.roundNum, game.isEnded, game.livesRemaining);
+
+  // Get all cards and find already used card IDs
+  const allCards = await dao.getCards();
+  const usedCardIds = game.records.map(record => record.card.id);
+  
+  // Find available cards (not already used)
+  const availableCards = allCards.filter(card => !usedCardIds.includes(card.id));
+  
+  if (availableCards.length === 0) {
+    throw ErrorDTO.internalServerError(`No more cards available for game ${gameId}`);
+  }
+  
+  // Pick a random available card
+  const randomIndex = crypto.randomInt(0, availableCards.length);
+  const selectedCard = availableCards[randomIndex];
+  
+  // Create new game record for this round
+  const recordId = await dao.createGameRecord(
+    gameId,
+    selectedCard.id,
+    requestedRound,
+    null, // wasGuessed = null initially
+    dayjs().toISOString(),  // requestedAt = now
+    null   // respondedAt = null initially
   );
-  if (!nextCardRecord || !nextCardRecord.card) {
-    throw ErrorDTO.notFound(
-      `No card found for game ${gameId} in round ${game.roundNum}`
-    );
-  }
-  const nextCard = nextCardRecord.card;
-
-  // Update next card record with drawn datetime only if it was not drawn before
-  if (nextCardRecord.requestedAt=== null) {
-    await dao.updateGameRecord(
-      nextCardRecord.id,
-      nextCardRecord.wasGuessed,
-      dayjs().toISOString(),
-      null
-    );
-    nextCardRecord.requestedAt = dayjs().toISOString();
-  }
-
-  if (!nextCardRecord.card) {
-    throw ErrorDTO.notFound(
-      `No card found for game ${gameId} in round ${game.roundNum}`
-    );
-  }
-
-  // Filter records to show base cards (round 0) + previously guessed cards (wasGuessed = true)
-  game.records = game.records.filter(
-    (record) => (record.round === 0) || (record.round < game.roundNum && record.wasGuessed === true)
+  
+  // Add to game records
+  const nextCardRecord = {
+    id: recordId,
+    card: selectedCard,
+    round: requestedRound,
+    wasGuessed: null,  // Initially null until answered
+    requestedAt: dayjs().toISOString(),
+    respondedAt: null
+  };  // Create a game object without records for the response
+  const gameForResponse = new Game(
+    game.id,              // id
+    game.userid,          // userid  
+    game.createdat,       // createdat
+    game.roundNum,        // roundNum
+    game.isEnded,         // isended
+    game.isDemo,          // isdemo
+    game.livesRemaining,  // livesRemaining
+    []                    // Empty records array
   );
 
-  // Prepare response with game state and next card
+  // Prepare response with game state (without records) and next card
   return {
-    game: game.toJSON(),
+    game: gameForResponse.toJSON(),
     nextCard: nextCardRecord.card.toJSONWithoutMiseryIndex(),
   };
 }
@@ -293,19 +311,19 @@ export async function handleCheckAnswer(
   if (currentRecord.respondedAt === null) {
     currentRecord.respondedAt = respondedAt.toISOString();
   }
-
   // Check if user provided a valid answer
-  let response = null;
+  let isCorrect = false;
   if (!cardsIds || cardsIds.length === 0) {
-    response = { isCorrect: false };
+    isCorrect = false;
     currentRecord.wasGuessed = false;
   } else {
-    response = evaluateUserAnswer(game, cardsIds);
-    currentRecord.wasGuessed = response.isCorrect;
+    const evaluation = evaluateUserAnswer(game, cardsIds);
+    isCorrect = evaluation.isCorrect;
+    currentRecord.wasGuessed = isCorrect;
   }
-
-  // Update lives if answer is wrong (only for non-demo games)
-  if (!response.isCorrect && !game.isDemo) {
+  
+  // Update lives if answer is wrong
+  if (!isCorrect) {
     game.livesRemaining -= 1;
   }
 
@@ -316,11 +334,24 @@ export async function handleCheckAnswer(
     currentRecord.requestedAt,
     currentRecord.respondedAt
   );
-
+  
   // Update game state if needed
-  game = await checkAndUpdateGameState(game);
-  response.isEnded = game.isEnded;
-  response.livesRemaining = game.livesRemaining;
+  game = await checkAndUpdateGameEnding(game);
+  
+  // Create GameRecord response object
+  // If correct, include the card with all information (including misery index)
+  // If wrong, include the record but with card as null
+  const gameRecord = {
+    card: isCorrect ? currentRecord.card.toJSON() : null,
+    round: currentRecord.round,
+    wasGuessed: currentRecord.wasGuessed
+  };
+  
+  const response = {
+    gameRecord: gameRecord,
+    isEnded: game.isEnded,
+    livesRemaining: game.livesRemaining
+  };
 
   // For demo games, delete the game after validation
   if (game.isDemo && game.isEnded) {

@@ -123,21 +123,19 @@ export default function GameRecord({ game }) {
                         }} />
                       )}
                     </div>
-                  ))}
-
-                {/* Carte giocate (round > 0) */}
-                {game.records.filter((r) => r.round > 0).length > 0 && (
-                  <>
-                    <h6 
-                      style={{ 
-                        color: colors.text.light, 
-                        marginTop: "1.5rem", 
-                        marginBottom: "1rem" 
-                      }}
-                    >
-                      Played cards:
-                    </h6>
-                    {game.records
+                  ))}                {/* Carte giocate (round > 0) */}
+                <>
+                  <h6 
+                    style={{ 
+                      color: colors.text.light, 
+                      marginTop: "1.5rem", 
+                      marginBottom: "1rem" 
+                    }}
+                  >
+                    Played cards:
+                  </h6>
+                  {game.records.filter((r) => r.round > 0).length > 0 ? (
+                    game.records
                       .filter((r) => r.round > 0)
                       .sort((a, b) => a.round - b.round)
                       .map((r, i, array) => (
@@ -170,11 +168,10 @@ export default function GameRecord({ game }) {
                               borderColor: colors.border.light,
                               opacity: 0.3 
                             }} />
-                          )}
-                        </div>
-                      ))}
-                  </>
-                )}
+                          )}                        </div>
+                      ))
+                  ) : null}
+                </>
               </Col>
             </Row>
           )}

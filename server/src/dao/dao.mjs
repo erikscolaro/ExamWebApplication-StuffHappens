@@ -104,7 +104,7 @@ export const createGame = (userId, createdAt, isDemo) => {
     const userIdValue = isDemo ? null : userId;
     db.run(
       query,
-      [userIdValue, createdAt, 1, 0, isDemo ? 1 : 0, 3],
+      [userIdValue, createdAt, 0, 0, isDemo ? 1 : 0, 3],
       function (err) {
         if (err) reject(err); // error management done outside
         else {
