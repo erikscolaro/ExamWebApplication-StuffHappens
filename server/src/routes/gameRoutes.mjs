@@ -8,7 +8,7 @@ import {
 import {
   createNewGameWithSetup,
   handleDrawCard,
-  handleCheckAnswer
+  handleCheckAnswer,
 } from "../services/gameServices.mjs";
 import dayjs from "dayjs";
 import { getGamesWithRecordsAndCards } from "../dao/dao.mjs";
@@ -20,19 +20,15 @@ const router = express.Router();
 // GET /api/v1/users/:userId/games - Get game history for authenticated user
 // request: no params, no body (userId taken from authenticated user)
 // response: { history: Array<Game> } where each game contains complete records and cards
-router.get(
-  "/",
-  handleValidationErrors,
-  async (req, res, next) => {
-    try {
-      const userId = parseInt(req.user.id);
-      const games = await getGamesWithRecordsAndCards(parseInt(userId));
-      res.status(200).json({ history: games });
-    } catch (error) {
-      next(error);
-    }
+router.get("/", handleValidationErrors, async (req, res, next) => {
+  try {
+    const userId = parseInt(req.user.id);
+    const games = await getGamesWithRecordsAndCards(parseInt(userId));
+    res.status(200).json({ history: games });
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 // POST /api/v1/users/:userId/games/new - Create a new game for authenticated user
 // request: empty body (userId taken from authenticated user)
@@ -47,22 +43,18 @@ response: Basic game object without records (records are created in database but
   "records": []
 }
 */
-router.post(
-  "/new",
-  handleValidationErrors,
-  async (req, res, next) => {
-    try {
-      const userId = parseInt(req.user.id);
-      const createdAt = dayjs().toISOString();
+router.post("/new", handleValidationErrors, async (req, res, next) => {
+  try {
+    const userId = parseInt(req.user.id);
+    const createdAt = dayjs().toISOString();
 
-      const game = await createNewGameWithSetup(userId, createdAt, false);
-      
-      res.status(201).json(game);
-    } catch (error) {
-      next(error);
-    }
+    const game = await createNewGameWithSetup(userId, createdAt, false);
+
+    res.status(201).json(game);
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 // POST /api/v1/users/:userId/games/:gameId/round/:roundId/begin - Start a round and get next card (without misery index)
 // request: empty body (gameId and roundId in params, userId from authenticated user)
@@ -108,7 +100,7 @@ router.post(
   handleValidationErrors,
   async (req, res, next) => {
     try {
-      const { gameId, roundId} = req.params;
+      const { gameId, roundId } = req.params;
       const userId = parseInt(req.user.id);
       // Regular games: isDemo=false, userId from auth
       const response = await handleDrawCard(gameId, roundId, false, userId);
@@ -147,11 +139,17 @@ router.post(
   async (req, res, next) => {
     try {
       const { gameId, roundId } = req.params;
-      const { cardsIds } = req.body? req.body : {cardsIds: null};
+      const { cardsIds } = req.body ? req.body : { cardsIds: null };
       const userId = parseInt(req.user.id);
-      
+
       // Regular games: isDemo=false, userId from auth
-      const response = await handleCheckAnswer(gameId, cardsIds, roundId, false, userId);
+      const response = await handleCheckAnswer(
+        gameId,
+        cardsIds,
+        roundId,
+        false,
+        userId
+      );
       res.status(200).json(response);
     } catch (error) {
       next(error);

@@ -70,7 +70,8 @@ export const getGamesByUser = (userid, areEnded = true) => {
       "SELECT * FROM GAMES WHERE USERID = ? AND ISENDED = ? ORDER BY CREATEDAT DESC";
     db.all(query, [userid, areEnded ? 1 : 0], (err, rows) => {
       if (err) reject(err); // error management done outside
-      else {        // Convert rows to GameDB objects
+      else {
+        // Convert rows to GameDB objects
         const games = rows.map(
           (row) =>
             new Game(
@@ -126,13 +127,18 @@ export const createGame = (userId, createdAt, isDemo) => {
  */
 export const updateGame = (gameId, roundNum, isEnded, livesRemaining) => {
   return new Promise((resolve, reject) => {
-    const query = "UPDATE GAMES SET ROUND = ?, ISENDED = ?, LIVESREMAINING = ? WHERE ID = ?";
-    db.run(query, [roundNum, isEnded ? 1 : 0, livesRemaining, gameId], function (err) {
-      if (err) reject(err);
-      else {
-        resolve(this.changes);
+    const query =
+      "UPDATE GAMES SET ROUND = ?, ISENDED = ?, LIVESREMAINING = ? WHERE ID = ?";
+    db.run(
+      query,
+      [roundNum, isEnded ? 1 : 0, livesRemaining, gameId],
+      function (err) {
+        if (err) reject(err);
+        else {
+          resolve(this.changes);
+        }
       }
-    });
+    );
   });
 };
 
@@ -148,7 +154,8 @@ export const getGameById = (gameId) => {
     db.get(query, [gameId], (err, row) => {
       if (err) reject(err);
       else if (row === undefined) resolve(false);
-      else {        const game = new Game(
+      else {
+        const game = new Game(
           row.ID,
           row.USERID,
           row.CREATEDAT,
@@ -219,7 +226,8 @@ export const getGameRecordsByGameId = (gameId) => {
     const query = "SELECT * FROM GAME_RECORDS WHERE GAMEID = ?";
     db.all(query, [gameId], (err, rows) => {
       if (err) reject(err); // error management done outside
-      else {        // Convert rows to GameRecord objects
+      else {
+        // Convert rows to GameRecord objects
         const records = rows.map(
           (row) =>
             new GameRecord(
@@ -252,7 +260,8 @@ export const getGameRecordByGameIdAndRound = (gameId, round) => {
     db.get(query, [gameId, round], (err, row) => {
       if (err) reject(err); // error management done outside
       else if (row === undefined) resolve(null); // No record found
-      else {        const record = new GameRecord(
+      else {
+        const record = new GameRecord(
           row.ID,
           row.GAMEID,
           row.CARDID,
@@ -409,26 +418,34 @@ export const deleteDemoGame = (gameId) => {
   return new Promise((resolve, reject) => {
     db.serialize(() => {
       db.run("BEGIN TRANSACTION");
-      
+
       // Prima elimina i record del gioco
-      db.run("DELETE FROM GAME_RECORDS WHERE GAMEID = ?", [gameId], function(err) {
-        if (err) {
-          db.run("ROLLBACK");
-          reject(err);
-          return;
-        }
-        
-        // Poi elimina il gioco stesso (solo se è demo)
-        db.run("DELETE FROM GAMES WHERE ID = ? AND ISDEMO = 1", [gameId], function(err) {
+      db.run(
+        "DELETE FROM GAME_RECORDS WHERE GAMEID = ?",
+        [gameId],
+        function (err) {
           if (err) {
             db.run("ROLLBACK");
             reject(err);
-          } else {
-            db.run("COMMIT");
-            resolve(this.changes > 0);
+            return;
           }
-        });
-      });
+
+          // Poi elimina il gioco stesso (solo se è demo)
+          db.run(
+            "DELETE FROM GAMES WHERE ID = ? AND ISDEMO = 1",
+            [gameId],
+            function (err) {
+              if (err) {
+                db.run("ROLLBACK");
+                reject(err);
+              } else {
+                db.run("COMMIT");
+                resolve(this.changes > 0);
+              }
+            }
+          );
+        }
+      );
     });
   });
 };

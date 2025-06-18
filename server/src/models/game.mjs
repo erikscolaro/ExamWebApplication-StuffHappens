@@ -1,6 +1,15 @@
 // Simple models for database rows
 export class Game {
-  constructor(id, userid, createdat, roundNum, isended, isdemo, livesRemaining = null, records = []) {
+  constructor(
+    id,
+    userid,
+    createdat,
+    roundNum,
+    isended,
+    isdemo,
+    livesRemaining = null,
+    records = []
+  ) {
     this.id = id;
     this.userid = userid;
     this.createdat = createdat;
@@ -13,9 +22,11 @@ export class Game {
 
   getCardsIdsOrdered() {
     return this.records
-      .filter(record => record.round <= this.roundNum && record.card)
-      .map(record => record.card)
-      .filter(card => card.miseryIndex !== undefined && card.miseryIndex !== null)
+      .filter((record) => record.round <= this.roundNum && record.card)
+      .map((record) => record.card)
+      .filter(
+        (card) => card.miseryIndex !== undefined && card.miseryIndex !== null
+      )
       .sort((a, b) => a.miseryIndex - b.miseryIndex);
   }
   toJSON() {
@@ -26,7 +37,9 @@ export class Game {
       isEnded: this.isEnded,
       isDemo: this.isDemo,
       livesRemaining: this.livesRemaining,
-      records: this.records.filter(record => this.roundNum >= record.round).map(record => record.toJSON())
+      records: this.records
+        .filter((record) => this.roundNum >= record.round)
+        .map((record) => record.toJSON()),
     };
   }
   static fromJSON(json) {
@@ -38,13 +51,24 @@ export class Game {
       json.isEnded,
       json.isDemo,
       json.livesRemaining,
-      json.records ? json.records.map(record => GameRecord().fromJSON(record)) : []
+      json.records
+        ? json.records.map((record) => GameRecord().fromJSON(record))
+        : []
     );
   }
 }
 
 export class GameRecord {
-  constructor(id, gameId, cardId, card, round, wasGuessed, requestedAt = null, respondedAt = null) {
+  constructor(
+    id,
+    gameId,
+    cardId,
+    card,
+    round,
+    wasGuessed,
+    requestedAt = null,
+    respondedAt = null
+  ) {
     this.id = id;
     this.gameId = gameId;
     this.cardId = cardId;
@@ -58,7 +82,7 @@ export class GameRecord {
     return {
       card: this.card ? this.card.toJSON() : null,
       round: this.round,
-      wasGuessed: (this.wasGuessed !== null) ? Boolean(this.wasGuessed): null,
+      wasGuessed: this.wasGuessed !== null ? Boolean(this.wasGuessed) : null,
     };
   }
   static fromJSON(json) {

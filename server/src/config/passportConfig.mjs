@@ -1,17 +1,18 @@
-import passport from 'passport';
-import LocalStrategy from 'passport-local';
-import { getUserByUsername } from '../dao/dao.mjs';
+import passport from "passport";
+import LocalStrategy from "passport-local";
+import { getUserByUsername } from "../dao/dao.mjs";
 
-passport.use(new LocalStrategy(async function verify(username, password, cb) {
-  try {
-    const user = await getUserByUsername(username, password);
-    if(!user)
-      return cb(null, false, 'Incorrect username or password.');
-    return cb(null, user);
-  } catch (error) {
-    return cb(error);
-  }
-}));
+passport.use(
+  new LocalStrategy(async function verify(username, password, cb) {
+    try {
+      const user = await getUserByUsername(username, password);
+      if (!user) return cb(null, false, "Incorrect username or password.");
+      return cb(null, user);
+    } catch (error) {
+      return cb(error);
+    }
+  })
+);
 
 passport.serializeUser((user, cb) => {
   cb(null, user.toJSON());
