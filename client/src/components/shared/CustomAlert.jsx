@@ -1,12 +1,10 @@
 import { Alert, Container } from "react-bootstrap";
 import { colors } from "../../colors.mjs";
 
-function CustomAlert({ message, setMessage }) {
-  if (!message || !message.msg) {
+function CustomAlert({ message, setMessage }) {  if (!message || !message.msg) {
     return null;
   }
 
-  // Configurazione centralizzata per tipo di messaggio
   const messageConfig = {
     danger: { icon: "bi-exclamation-triangle", variant: "danger" },
     error: { icon: "bi-exclamation-triangle", variant: "danger" },

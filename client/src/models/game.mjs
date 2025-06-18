@@ -1,4 +1,3 @@
-// Simple models for database rows
 import { Card } from "./card.mjs";
 
 export class Game {

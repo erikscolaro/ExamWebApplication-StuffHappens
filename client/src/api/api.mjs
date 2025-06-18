@@ -5,7 +5,6 @@ import ErrorDTO from "../models/errors.mjs";
 
 const SERVER_URL = "http://localhost:3001";
 
-// Helper function to handle API errors consistently
 const handleApiError = (response) => {
   if (response.ok) {
     return response.json();
@@ -21,22 +20,11 @@ const handleApiError = (response) => {
       }
     })
     .catch(() => {
-      throw new Error(
-        `Server error: ${response.status} ${response.statusText}`
+      throw new Error(        `Server error: ${response.status} ${response.statusText}`
       );
     });
 };
 
-// =================== DEMO API CALLS ===================
-/**
- * Creates a new demo game by sending a POST request to the server.
- * The demo game does not require user authentication and is used for testing purposes.
- *
- * @async
- * @function createDemoGame
- * @returns {Promise<Game>} A promise that resolves to the created demo game object
- * @throws {ErrorDTO} Throws structured error from server
- */
 const createDemoGame = async () => {
   const response = await fetch(`${SERVER_URL}/api/v1/demos/new`, {
     method: "POST",
@@ -99,17 +87,6 @@ const checkAnswerDemo = async (gameId, roundId, cardIds) => {
   return await handleApiError(response);
 };
 
-// =================== FULL GAME API CALLS ===================
-
-/**
- * Retrieves the games history from the server for the authenticated user.
- * Makes a GET request to fetch all historical game records for the current user.
- *
- * @async
- * @function getGamesHistory
- * @returns {Promise<Game[]>} A promise that resolves to an array of Game objects containing game history data
- * @throws {ErrorDTO} Throws structured error from server
- */
 const getGamesHistory = async (userId) => {
   const response = await fetch(`${SERVER_URL}/api/v1/users/${userId}/games`, {
     method: "GET",

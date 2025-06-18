@@ -147,7 +147,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { gameId, roundId } = req.params;
-      const { cardsIds } = req.body;
+      const { cardsIds } = req.body? req.body : {cardsIds: null};
       const userId = parseInt(req.user.id);
       
       // Regular games: isDemo=false, userId from auth

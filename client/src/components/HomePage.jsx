@@ -45,15 +45,12 @@ function HomePage({ loggedIn }) {
           <li>
             Start with <span style={highlight}>3 cards</span>, representing
             horrible situations ordered by misery (from 1.0 to 100.0).
-          </li>
-          <li>
-            Each round you'll be shown{" "}
-            <span style={highlight}>a new situation</span> with a
+          </li>          <li>
+            Each round you'll be shown <span style={highlight}>a new situation</span> with a
             description and image, but without the misery index.
           </li>
           <li>
-            You must guess <span style={highlight}>where it ranks</span>{" "}
-            compared to the cards you have.
+            You must guess <span style={highlight}>where it ranks</span> compared to the cards you have.
           </li>
           <li>
             You have <span style={highlight}>30 seconds</span> to answer:

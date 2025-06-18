@@ -25,13 +25,17 @@ function LoginForm(props) {
     try {
       await props.handleLogin(credentials);
       return { success: true };
-    } catch {
+    } catch (err) {
+      console.error("Login failed:", err);
       return { error: "Login failed. Check your credentials." };
     }
   }
 
   return (
-    <Container fluid className="d-flex justify-content-center align-items-center vh-100">
+    <Container
+      fluid
+      className="d-flex justify-content-center align-items-center vh-100"
+    >
       <Card
         style={{
           borderColor: colors.background.gray_700,

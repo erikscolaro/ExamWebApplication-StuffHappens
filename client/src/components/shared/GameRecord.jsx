@@ -29,9 +29,7 @@ export default function GameRecord({ game }) {
               <small style={{ fontSize: "0.75rem" }}>
                 {formatDate(game.createdAt)}
               </small>
-            </Col>
-            <Col style={{ textAlign: "right" }}>
-              {" "}
+            </Col>            <Col style={{ textAlign: "right" }}>
               <div>
                 {game.records &&
                 game.records.filter((r) => r.round > 0).length > 0 &&
@@ -44,7 +42,7 @@ export default function GameRecord({ game }) {
                 ) : (
                   <span style={{ color: colors.logic.error }}>Lost 😢</span>
                 )}
-              </div>{" "}
+              </div>
               <div
                 style={{
                   fontSize: "0.75rem",

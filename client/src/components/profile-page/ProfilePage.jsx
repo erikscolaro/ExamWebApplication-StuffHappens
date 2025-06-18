@@ -5,14 +5,14 @@ import API from "../../api/api.mjs";
 import GameRecord from "../shared/GameRecord";
 import dayjs from "dayjs";
 
-export default function HistoryPage({ user }) {
+export default function ProfilePage({ user }) {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
 
-    const loadGameHistory = async () => {
+    const loadGames = async () => {
       try {
         const result = await API.getGamesHistory(user.id);
         const gamesWithDayjs = result.map((game) => ({
@@ -24,21 +24,18 @@ export default function HistoryPage({ user }) {
             (a, b) => b.createdAt.valueOf() - a.createdAt.valueOf()
           )
         );
-      } catch (error) {
-        console.error("Error loading game history:", error);
+      } catch (error) {        console.error("Error loading games:", error);
         setGames([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadGameHistory();
+    loadGames();
   }, [user]);
-
   if (!user) {
     return (
       <Container className="p-3 text-center">
-        {" "}
         <div style={{ color: colors.text.error || "#dc3545" }}>
           Error: User not available.
         </div>
@@ -71,7 +68,7 @@ export default function HistoryPage({ user }) {
             <Spinner
               animation="border"
               style={{ color: colors.background.accent }}
-            />{" "}
+            />
             <div style={{ color: colors.text.light }}>Loading...</div>
           </div>
         ) : games.length === 0 ? (
@@ -87,7 +84,7 @@ export default function HistoryPage({ user }) {
             ))}
           </Row>
         )}
-      </div>{" "}
+      </div>
     </Container>
   );
 }

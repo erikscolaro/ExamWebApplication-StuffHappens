@@ -3,22 +3,19 @@ import { useState, useEffect } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router";
 import API from "./api/api.mjs";
 
-// Layout Components
 import DefaultLayout from "./components/DefaultLayout";
 import NotFound from "./components/shared/NotFound.jsx";
 
-// Game Components
 import HomePage from "./components/HomePage.jsx";
 import GamePage from "./components/game-page/GamePage.jsx";
 import { LoginForm } from "./components/shared/AuthComponents.jsx";
-import HistoryPage from "./components/history-page/HistoryPage.jsx";
+import ProfilePage from "./components/profile-page/ProfilePage.jsx";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
 
-  // Check if user is already logged in on app start
   useEffect(() => {
     const checkUserSession = async () => {
       try {
@@ -49,8 +46,8 @@ function App() {
     try {
       await API.logOut();
       setLoggedIn(false);
-      setUser(null);      setMessage({ msg: "Logout successful!", type: "info" });
-    } catch {
+      setUser(null);      setMessage({ msg: "Logout successful!", type: "info" });    } catch (err) {
+      console.error("Error during logout:", err);
       setMessage({ msg: "Error during logout", type: "danger" });
     }
   };
@@ -90,11 +87,10 @@ function App() {
           path="/demo"
           element={<GamePage isLogged={false} />}
         />
-        
-        <Route 
-          path="/history" 
+          <Route 
+          path="/profile" 
           element={
-              <HistoryPage user={user} />
+              <ProfilePage user={user} />
           } 
         />
 

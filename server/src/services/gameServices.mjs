@@ -282,7 +282,7 @@ export async function handleCheckAnswer(
     dayjs(currentRecord.respondedAt).diff(dayjs(currentRecord.requestedAt)) >
     CONFIG.MAX_RESPONSE_TIME;
 
-  if (isTimedOut) {
+  if (isTimedOut || !cardsIds || cardsIds.length === 0) {
     response = { isCorrect: false };
     currentRecord.wasGuessed = false;
     currentRecord.timedOut = true;

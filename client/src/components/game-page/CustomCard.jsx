@@ -2,6 +2,8 @@ import { Card } from "react-bootstrap";
 import { colors } from "../../colors.mjs";
 import { useState } from "react";
 
+const SERVER_URL = "http://localhost:3001";
+
 /**
  * CustomCard component renders a styled card displaying game card information
  *
@@ -62,8 +64,8 @@ function CustomCard({ card, placeholder = false, children }) {
             variant="top"
             src={
               imageError || !card.imageFilename
-                ? "default.png"
-                : card.imageFilename
+                ? `${SERVER_URL}/images/default.png`
+                : `${SERVER_URL}/images/${card.imageFilename}`
             }
             onError={handleImageError}
             style={{

@@ -57,11 +57,10 @@ function NavHeader(props) {
               fontSize: "1rem",
               fontWeight: "bold",
             }}
-          >            <Nav.Link href="/">Instructions</Nav.Link>
-            {props.loggedIn ? (
+          >            <Nav.Link href="/">Instructions</Nav.Link>            {props.loggedIn ? (
               <>
                 <Nav.Link href="/play">Play</Nav.Link>
-                <Nav.Link href="/history">History</Nav.Link>
+                <Nav.Link href="/profile">Profile</Nav.Link>
               </>
             ) : (
               <Nav.Link href="/demo">Demo</Nav.Link>

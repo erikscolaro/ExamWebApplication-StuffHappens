@@ -30,11 +30,8 @@ export default function CardsArea({ cards, selector, setSelector, roundStarted =
           id={0}
           actuallyPressed={selector}
           setPressed={setSelector}
-          roundStarted={roundStarted}
-        />
-        {
-          // react needs a key also for the fragment to correctly manage the list
-          cards.map((card, index) => (
+          roundStarted={roundStarted}        />
+        {cards.map((card, index) => (
             <Fragment key={`fragment-${index}`}>
               <CustomCard card={card} />              <CircleButton
                 id={index + 1}
