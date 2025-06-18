@@ -6,7 +6,7 @@ import API from "./api/api.mjs";
 import DefaultLayout from "./components/DefaultLayout";
 import NotFound from "./components/shared/NotFound.jsx";
 
-import HomePage from "./components/HomePage.jsx";
+import HomePage from "./components/home-page/HomePage.jsx";
 import GamePage from "./components/game-page/GamePage.jsx";
 import LoginPage from "./components/login-page/LoginPage.jsx";
 import ProfilePage from "./components/profile-page/ProfilePage.jsx";

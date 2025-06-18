@@ -1,9 +1,9 @@
 import { Container, Row, Col, Card } from "react-bootstrap";
-import { colors } from "../colors.mjs";
+import { colors } from "../../colors.mjs";
 import { Link } from "react-router";
-import CustomButton from "./shared/CustomButton";
+import CustomButton from "../shared/CustomButton";
 import { useContext } from "react";
-import UserContext from "../contexts/userContext";
+import UserContext from "../../contexts/userContext";
 
 /**
  * HomePage component that serves as the main landing page
