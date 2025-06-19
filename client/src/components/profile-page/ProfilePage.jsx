@@ -6,7 +6,7 @@ import API from "../../api/api.mjs";
 import GameRecord from "../shared/GameRecord";
 import dayjs from "dayjs";
 import CustomSpinner from "../shared/CustomSpinner.jsx";
-import UserContext from "../../contexts/userContext";
+import UserContext from "../../contexts/UserContext";
 import ErrorContext from "../../contexts/ErrorContext.js";
 
 export default function ProfilePage() {

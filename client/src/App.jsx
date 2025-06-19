@@ -11,7 +11,7 @@ import GamePage from "./components/game-page/GamePage.jsx";
 import LoginPage from "./components/login-page/LoginPage.jsx";
 import ProfilePage from "./components/profile-page/ProfilePage.jsx";
 
-import UserContext from "./contexts/userContext.js";
+import UserContext from "./contexts/UserContext.js";
 import ErrorContext from "./contexts/ErrorContext.js";
 
 function App() {

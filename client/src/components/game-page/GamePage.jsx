@@ -11,7 +11,7 @@ import CountdownTimer from "./CountdownTimer";
 import { Game } from "../../models/game.mjs";
 import { Card } from "../../models/card.mjs";
 import LivesIndicator from "./LivesIndicator";
-import UserContext from "../../contexts/userContext";
+import UserContext from "../../contexts/UserContext";
 import CustomSpinner from "../shared/CustomSpinner.jsx";
 import ErrorContext from "../../contexts/ErrorContext.js";
 import { Navigate, useNavigate } from "react-router";

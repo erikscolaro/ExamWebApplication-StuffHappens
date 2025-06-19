@@ -3,7 +3,7 @@ import { Form, Card, Container } from "react-bootstrap";
 import CustomSpinner from "../shared/CustomSpinner.jsx";
 import CustomButton from "../shared/CustomButton";
 import { colors } from "../../colors.mjs";
-import UserContext from "../../contexts/userContext.js";
+import UserContext from "../../contexts/UserContext.js";
 
 export default function LoginPage() {
   const { handleLogin, isLoading } = useContext(UserContext);

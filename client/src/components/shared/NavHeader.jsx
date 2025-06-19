@@ -3,7 +3,7 @@ import { useLocation, Link } from "react-router";
 import { colors } from "../../colors.mjs";
 import CustomButton from "./CustomButton";
 import { useContext } from "react";
-import UserContext from "../../contexts/userContext";
+import UserContext from "../../contexts/UserContext";
 
 function NavHeader() {
   const page = useLocation().pathname;

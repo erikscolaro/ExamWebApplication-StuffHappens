@@ -2,7 +2,7 @@ import { Container, Row, Col, Card } from "react-bootstrap";
 import { colors } from "../../colors.mjs";
 import CustomButton from "../shared/CustomButton";
 import { useContext } from "react";
-import UserContext from "../../contexts/userContext";
+import UserContext from "../../contexts/UserContext";
 
 /**
  * HomePage component that serves as the main landing page
