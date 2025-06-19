@@ -31,7 +31,7 @@ POST {{baseUrl}}/api/v1/users/{{userid}}/games/new
 Content-Type: application/json
 
 ###
-@gameid = 87
+@gameid = 1
 
 ### 4. OTTIENI STORIA PARTITE (opzionale - per vedere lo stato)
 GET {{baseUrl}}/api/v1/users/{{userid}}/games
@@ -98,7 +98,7 @@ POST {{baseUrl}}/api/v1/demos/new
 Content-Type: application/json
 
 ###
-@demoGameId = 90
+@demoGameId = 1
 
 ### DEMO 2. INIZIA PRIMO ROUND DEMO - Ottieni la quarta carta
 # Risposta: 3 carte di base visibili + 1 nuova carta pescata

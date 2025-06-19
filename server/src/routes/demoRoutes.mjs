@@ -15,10 +15,11 @@ import dayjs from "dayjs";
 
 const router = express.Router();
 
-// =================== ROUTE HANDLERS ===================
+// =================== DEMO GAME ROUTES ===================
 
 // POST /api/v1/demos/new - Create a new demo game
-// expected empty body, so no validators needed
+// Request: Empty body - no authentication required for demo games
+// Response: Basic demo game object without records (records are created in database but not returned)
 /*
 response: Basic demo game object without records (records are created in database but not returned)
 {
@@ -27,6 +28,7 @@ response: Basic demo game object without records (records are created in databas
   "roundNum": 0,
   "isEnded": false,
   "isDemo": true,
+  "livesRemaining": 3,
   "records": []
 }
 */
@@ -43,8 +45,9 @@ router.post("/new", handleValidationErrors, async (req, res, next) => {
 });
 
 // POST /api/v1/demos/:gameId/round/:roundId/begin - Start a round and get next card for demo game
-// request: empty body (gameId and roundId in params)
-/* response: Game state with filtered records + next card without misery index
+// Request: Empty body (gameId and roundId in params) - no authentication required
+// Response: Game object (without records) + next card (without misery index)
+/* response: Game object (without records) + next card (without misery index)
 {
   "game": {
     "id": 1,
@@ -52,21 +55,7 @@ router.post("/new", handleValidationErrors, async (req, res, next) => {
     "roundNum": 1,
     "isEnded": false,
     "isDemo": true,
-    "records": [
-      // Only cards from previous rounds where timedOut = false
-      {
-        "card": {
-          "id": 5,
-          "name": "Card Name",
-          "imageFilename": "image5.jpg",
-          "miseryIndex": 10
-        },
-        "round": 0,
-        "wasGuessed": true,
-        "timedOut": false
-      }
-      // ... other cards from round < current roundNum where timedOut = false
-    ]
+    "livesRemaining": 3
   },
   "nextCard": {
     "id": 8,
@@ -97,6 +86,8 @@ router.post(
 );
 
 // POST /api/v1/demos/:gameId/round/:roundId/verify - Submit answer for current demo game round
+// Request: Body with cardsIds array - no authentication required
+// Response: Game record with evaluation result, game status and lives remaining
 /*
 request body:
 {
@@ -105,20 +96,40 @@ request body:
 
 response if correct answer:
 {
-  "isCorrect": true,
-  "correctOrder": [1, 2, 3, 4]  // Cards sorted by misery index (ascending)
+  "gameRecord": {
+    "card": {
+      "id": 8,
+      "name": "Card Name",
+      "imageFilename": "image8.jpg",
+      "miseryIndex": 25.5
+    },
+    "round": 1,
+    "wasGuessed": true
+  },
+  "isEnded": true,  // Demo games always end after 1 round
+  "livesRemaining": 3
 }
 
 response if incorrect answer:
 {
-  "isCorrect": false,
-  "correctOrder": [3, 1, 4, 2]  // Correct order sorted by misery index (ascending)
+  "gameRecord": {
+    "card": null,  // No card details provided for wrong answers
+    "round": 1,
+    "wasGuessed": false
+  },
+  "isEnded": true,  // Demo games always end after 1 round
+  "livesRemaining": 2
 }
 
 response if user did not answer in time (timeout):
 {
-  "isCorrect": false
-  // Note: no correctOrder provided for timeout
+  "gameRecord": {
+    "card": null,
+    "round": 1,
+    "wasGuessed": false
+  },
+  "isEnded": true,  // Demo games always end after 1 round
+  "livesRemaining": 2
 }
 */
 router.post(

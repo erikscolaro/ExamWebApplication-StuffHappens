@@ -16,16 +16,12 @@ const CONFIG = {
     IMAGES_PATH: "/public/images",
     IMAGES_URL: "/images",
   },
-  CORS_OPTIONS: {
-    origin: ["http://localhost:5173"],
-    optionsSuccessStatus: 200, // Fixed typo: was optionsSuccessState
+  CORS_OPTIONS: {    origin: ["http://localhost:5173"],
+    optionsSuccessStatus: 200,
     credentials: true,
   },
   MORGAN_LOG_LEVEL: "dev",
-  CARDS_NUMBER: 50,
-  FULL_ROUNDS: 3, // Total rounds for full game
-  DEMO_ROUNDS: 1, // Total rounds for demo game
-  MAX_RESPONSE_TIME: 30000, // Time in milliseconds to answer a question
+  MAX_RESPONSE_TIME: 30000, // Time in milliseconds 
   HASHED_PASSWORD_KEY_LENGTH: 32, // Length of the hashed password
   HASHED_PASSWORD_SALT_LENGTH: 16, // Length of the salt for hashed password
 };
