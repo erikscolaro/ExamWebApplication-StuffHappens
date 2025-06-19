@@ -12,9 +12,10 @@ import LoginPage from "./components/login-page/LoginPage.jsx";
 import ProfilePage from "./components/profile-page/ProfilePage.jsx";
 
 import UserContext from "./contexts/userContext.js";
+import ErrorContext from "./contexts/ErrorContext.js";
 
 function App() {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(null);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,8 +23,6 @@ function App() {
     const checkUserSession = async () => {
       try {
         setIsLoading(true);
-        if (!user) return;
-        // Check if the user is authenticated
         const userInfo = await API.getUserInfo();
         if (!userInfo.authenticated) {
           setUser(null);
@@ -36,7 +35,7 @@ function App() {
     };
 
     checkUserSession();
-  }, [user]);
+  }, []);
 
   const handleLogin = async (credentials) => {
     try {
@@ -47,7 +46,11 @@ function App() {
         type: "success",
       });
     } catch (err) {
-      setMessage({ msg: err.message || err.toString(), type: "danger" });
+      console.error("Login failed:", err);
+      setMessage({
+        msg: "User or password is incorrect. Try again.",
+        type: "warning",
+      });
     }
   };
 
@@ -57,39 +60,44 @@ function App() {
       setUser(null);
       setMessage({ msg: "Logout successful!", type: "info" });
     } catch (err) {
-      setMessage({ msg: err.message || err.toString(), type: "danger" });
+      console.error("Logout failed:", err);
+      setMessage({ msg: "Logout not successful. Try again.", type: "danger" });
     }
   };
 
   return (
-    <UserContext.Provider
-      value={{ user, isLoading, handleLogin, handleLogout }}
-    >
-      <Routes>
-        <Route
-          element={<DefaultLayout message={message} setMessage={setMessage} />}
-        >
-          <Route path="/" element={<HomePage />} />
+    <ErrorContext.Provider value={{ message, setMessage }}>
+      <UserContext.Provider
+        value={{ user, isLoading, handleLogin, handleLogout }}
+      >
+        <Routes>
           <Route
-            path="/login"
             element={
-              user ? (
-                <Navigate replace to="/" />
-              ) : (
-                <LoginPage handleLogin={handleLogin} />
-              )
+              <DefaultLayout/>
             }
-          />
-          <Route
-            path="/play"
-            element={user ? <GamePage /> : <Navigate replace to="/" />}
-          />
-          <Route path="/demo" element={<GamePage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </UserContext.Provider>
+          >
+            <Route path="/" element={<HomePage />} />
+            <Route
+              path="/login"
+              element={
+                user ? (
+                  <Navigate replace to="/" />
+                ) : (
+                  <LoginPage handleLogin={handleLogin} />
+                )
+              }
+            />
+            <Route
+              path="/play"
+              element={user ? <GamePage /> : <Navigate replace to="/" />}
+            />
+            <Route path="/demo" element={<GamePage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </UserContext.Provider>
+    </ErrorContext.Provider>
   );
 }
 

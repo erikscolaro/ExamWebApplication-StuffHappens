@@ -1,6 +1,5 @@
 import { Container, Row, Col, Card } from "react-bootstrap";
 import { colors } from "../../colors.mjs";
-import { Link } from "react-router";
 import CustomButton from "../shared/CustomButton";
 import { useContext } from "react";
 import UserContext from "../../contexts/userContext";
@@ -35,7 +34,7 @@ function HomePage() {
             fontWeight: "700",
           }}
         >
-          Stuff Happens - Game Rules
+          Stuff Happens - University Life Edition
         </h2>
         <ol
           style={{
@@ -47,7 +46,8 @@ function HomePage() {
         >
           <li>
             Start with <span style={highlight}>3 cards</span> representing
-            horrible situations ordered by misery (from 1.0 to 100.0).
+            horrible university situations ordered by misery (from 1.0 to
+            100.0).
           </li>
           <li>
             Each round you'll be shown{" "}
@@ -73,14 +73,10 @@ function HomePage() {
                 to confirm your choice
               </li>
               <li>
-                You have <span style={highlight}>30 seconds</span> - a countdown
-                timer shows your remaining time
+                You have <span style={highlight}>30 seconds</span> to answer, so
+                be fast o you will loose a life! A countdown timer shows your
+                remaining time
               </li>
-            </ul>
-          </li>
-          <li>
-            <span style={highlight}>Results:</span>
-            <ul>
               <li>
                 If you guess correctly, the card is added to your collection and
                 you'll see its misery index revealed
@@ -90,16 +86,15 @@ function HomePage() {
                 correct position is shown
               </li>
               <li>
-                <span style={highlight}>Click "Continue"</span> after each
-                result to proceed to the next round
+                <span style={highlight}>Click "Continue"</span> in the pop-up
+                after each result to proceed to the next round
               </li>
             </ul>
           </li>
           <li>
             <span style={highlight}>Victory conditions:</span> Win by correctly
             guessing
-            <span style={highlight}>6 or more cards</span> before losing all 3
-            lives. Lose if you run out of lives.
+            <span style={highlight}> 3 cards</span> before losing all 3 lives.
           </li>
           <li>
             <span style={highlight}>Game end:</span> See your final collection

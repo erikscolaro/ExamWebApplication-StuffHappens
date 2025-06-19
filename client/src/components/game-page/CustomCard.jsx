@@ -48,7 +48,7 @@ function CustomCard({ card, placeholder = false, children }) {
               padding: "10px",
               width: "220px",
               height: "300px",
-              overflow: "hidden",
+              overflow: "visible",
               boxShadow: "0px 4px 8px " + colors.background.gray_800,
               backgroundColor: colors.background.gray_800,
               borderColor: colors.background.gray_700,
@@ -71,7 +71,9 @@ function CustomCard({ card, placeholder = false, children }) {
             style={{
               width: "200px",
               height: "200px",
+              minHeight: "200px",
               borderRadius: "15px",
+              objectFit: "cover",
             }}
           />
           <Card.ImgOverlay
@@ -80,19 +82,19 @@ function CustomCard({ card, placeholder = false, children }) {
               top: 0,
               right: -2,
               padding: "10px",
-              textAlign: "right",
+              display: "flex",
+              justifyContent: "end",
               height: "fit-content",
             }}
           >
             <p
               style={{
-                color: colors.background.gray_900,
-                backgroundColor: colors.background.gray_200,
+                color: colors.text.light,
+                backgroundColor: colors.background.gray_700,
                 fontSize: "18px",
                 fontWeight: "bold",
                 borderRadius: "0 15px 0 15px",
-                display: "inline-block",
-                padding: "0px 10px",
+                padding: "5px 10px",
               }}
             >
               {card.miseryIndex ? card.miseryIndex : "?"}
@@ -102,13 +104,13 @@ function CustomCard({ card, placeholder = false, children }) {
             style={{
               overflowY: "auto",
               height: "100%",
-              margin: "10px 0px 5px 0px",
+              margin: "5px 0px 0px 0px",
               padding: "0px 5px 0px 5px",
+              color: colors.text.accent,
+              fontWeight: "bold",
             }}
           >
-            <p style={{ color: colors.text.accent, fontWeight: "bold" }}>
-              {card.name}
-            </p>
+            {card.name}
           </Card.Body>
         </>
       )}

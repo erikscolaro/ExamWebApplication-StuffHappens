@@ -7,12 +7,14 @@ import GameRecord from "../shared/GameRecord";
 import dayjs from "dayjs";
 import CustomSpinner from "../shared/CustomSpinner.jsx";
 import UserContext from "../../contexts/userContext";
+import ErrorContext from "../../contexts/ErrorContext.js";
 
 export default function ProfilePage() {
   const { user, isLoading } = useContext(UserContext);
   const navigate = useNavigate();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { setMessage } = useContext(ErrorContext);
 
   useEffect(() => {
     if (!user) {
@@ -34,13 +36,17 @@ export default function ProfilePage() {
         );
       } catch (error) {
         console.error("Error loading games:", error);
+        setMessage({
+          msg: "Failed to load games. Please try again.",
+          type: "error",
+        });
         setGames([]);
       } finally {
         setLoading(false);
       }
     };
     loadGames();
-  }, [user, navigate]);
+  }, [user, navigate, setMessage]);
 
   if (isLoading || loading) {
     return <CustomSpinner />;

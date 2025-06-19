@@ -1,14 +1,20 @@
-import { Col, Container, Row } from "react-bootstrap";
+import { Container } from "react-bootstrap";
 import { Outlet } from "react-router";
 import NavHeader from "./shared/NavHeader";
 import { colors } from "../colors.mjs";
 import CustomAlert from "./shared/CustomAlert";
+import { useContext } from "react";
+import ErrorContext from "../contexts/ErrorContext";
 
-function DefaultLayout(props) {
+function DefaultLayout() {
+  const alertInfo = useContext(ErrorContext);
   return (
     <>
-      {props.message && props.message.msg && (
-        <CustomAlert message={props.message} setMessage={props.setMessage} />
+      {alertInfo.message && alertInfo.message.msg && (
+        <CustomAlert
+          message={alertInfo.message}
+          setMessage={alertInfo.setMessage}
+        />
       )}
       <Container
         fluid
@@ -37,6 +43,7 @@ function DefaultLayout(props) {
           }}
         >
           <Outlet />
+          {}
         </Container>
       </Container>
     </>

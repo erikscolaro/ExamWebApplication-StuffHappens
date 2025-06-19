@@ -13,6 +13,8 @@ import { Card } from "../../models/card.mjs";
 import LivesIndicator from "./LivesIndicator";
 import UserContext from "../../contexts/userContext";
 import CustomSpinner from "../shared/CustomSpinner.jsx";
+import ErrorContext from "../../contexts/ErrorContext.js";
+import { Navigate, useNavigate } from "react-router";
 
 // Returns cards from game records ordered by misery index
 function getCardsIdsOrdered(game) {
@@ -57,6 +59,8 @@ function addOrUpdateRecord(
 
 export default function GamePage() {
   const { user, isLoading } = useContext(UserContext);
+  const { setMessage } = useContext(ErrorContext);
+  const navigate = useNavigate();
 
   const [game, setGame] = useState(null);
   const [roundCurrent, setRoundCurrent] = useState(0);
@@ -128,6 +132,12 @@ export default function GamePage() {
       }
     } catch (error) {
       console.error("Error sending answer:", error);
+      setMessage({
+        msg: "An error occurred while sending your answer.",
+        type: "danger",
+      });
+      navigate("/");
+      return;
     }
 
     setSelector(null);
@@ -192,7 +202,12 @@ export default function GamePage() {
         setNextCard(null);
       } catch (error) {
         console.error("Error initializing game:", error);
-        throw error;
+        setMessage({
+          msg: "An error occurred while starting a new game. Try again later.",
+          type: "danger",
+        });
+        navigate("/");
+        return;
       }
     };
 
@@ -201,7 +216,7 @@ export default function GamePage() {
       setGameIsPlaying(true);
       initializeGame();
     }
-  }, [user, roundCurrent, gameIsPlaying]);
+  }, [user, roundCurrent, gameIsPlaying, setMessage, navigate]);
 
   // Fetches the next card when starting a new round
   useEffect(() => {
@@ -226,7 +241,10 @@ export default function GamePage() {
         startTimer();
       } catch (error) {
         console.error("Error fetching next round:", error);
-        throw error;
+        setMessage({
+          msg: "An error occurred while fetching the next round. Try again!.",
+          type: "danger",
+        });
       }
     };
     if (
@@ -239,7 +257,8 @@ export default function GamePage() {
     )
       return;
     fetchNextRound();
-  }, [roundCurrent, game, user]);
+  }, [roundCurrent, game, user, setMessage]);
+
   if (isLoading || !game) {
     return <CustomSpinner />;
   }
@@ -277,10 +296,6 @@ export default function GamePage() {
       <Container
         fluid
         className="d-flex p-3 flex-column align-items-center gap-5"
-        style={{
-          paddingTop: "5vh",
-          paddingBottom: "5vh",
-        }}
       >
         <Row className="justify-content-between align-items-center w-100">
           <Col>

@@ -7,6 +7,7 @@ import UserContext from "../../contexts/userContext.js";
 
 export default function LoginPage() {
   const { handleLogin, isLoading } = useContext(UserContext);
+  const { setMessage } = useContext(UserContext);
 
   const [state, formAction, isPending] = useActionState(loginFunction, {
     username: "",
@@ -23,7 +24,10 @@ export default function LoginPage() {
       return { success: true };
     } catch (err) {
       console.error("Login failed:", err);
-      return { error: "Login failed. Check your credentials." };
+      setMessage({
+        msg: "User or password is incorrect. Try again.",
+        type: "warning",
+      });
     }
   }
   if (isPending || isLoading) {
@@ -41,6 +45,8 @@ export default function LoginPage() {
           borderRadius: "22px",
           padding: "20px",
           overflow: "hidden",
+          width: "400px",
+          height: "fit-content",
           boxShadow: "0 6px 16px " + colors.background.gray_800,
           backgroundColor: colors.background.gray_800,
         }}
@@ -84,14 +90,15 @@ export default function LoginPage() {
             style={{
               color: colors.text.light,
               fontSize: "0.9rem",
+              textAlign: "center",
             }}
           >
             <div>
-              User 1: <strong>pirataarrabbiato99</strong> / Password:
+              User 1: <strong>progamer</strong> / Password:
               <strong>password</strong>
             </div>
             <div>
-              User 2: <strong>jacksparrow</strong> / Password:
+              User 2: <strong>noobplayer</strong> / Password:
               <strong>password</strong>
             </div>
           </Form.Text>
