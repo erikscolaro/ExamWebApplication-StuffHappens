@@ -2,8 +2,7 @@ import { Game } from "../models/game.mjs";
 import { Card } from "../models/card.mjs";
 import User from "../models/user.mjs";
 import ErrorDTO from "../models/errors.mjs";
-
-const SERVER_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+import config from "../config/config";
 
 const handleApiError = async (response) => {
   if (response.ok) {
@@ -26,7 +25,7 @@ const handleApiError = async (response) => {
 };
 
 const createDemoGame = async () => {
-  const response = await fetch(`${SERVER_URL}/api/v1/demos/new`, {
+  const response = await fetch(`${config.SERVER_URL}/api/v1/demos/new`, {
     method: "POST",
   });
 
@@ -46,7 +45,7 @@ const createDemoGame = async () => {
  * */
 const nextRoundDemo = async (gameId, roundId) => {
   const response = await fetch(
-    `${SERVER_URL}/api/v1/demos/${gameId}/round/${roundId}/begin`,
+    `${config.SERVER_URL}/api/v1/demos/${gameId}/round/${roundId}/begin`,
     {
       method: "POST",
     }
@@ -72,7 +71,7 @@ const nextRoundDemo = async (gameId, roundId) => {
  */
 const checkAnswerDemo = async (gameId, roundId, cardIds) => {
   const response = await fetch(
-    `${SERVER_URL}/api/v1/demos/${gameId}/round/${roundId}/verify`,
+    `${config.SERVER_URL}/api/v1/demos/${gameId}/round/${roundId}/verify`,
     {
       method: "POST",
       headers: {
@@ -88,7 +87,7 @@ const checkAnswerDemo = async (gameId, roundId, cardIds) => {
 };
 
 const getGamesHistory = async (userId) => {
-  const response = await fetch(`${SERVER_URL}/api/v1/users/${userId}/games`, {
+  const response = await fetch(`${config.SERVER_URL}/api/v1/users/${userId}/games`, {
     method: "GET",
     credentials: "include",
   });
@@ -106,7 +105,7 @@ const getGamesHistory = async (userId) => {
  */
 const createGame = async (userId) => {
   const response = await fetch(
-    `${SERVER_URL}/api/v1/users/${userId}/games/new`,
+    `${config.SERVER_URL}/api/v1/users/${userId}/games/new`,
     {
       method: "POST",
       credentials: "include",
@@ -130,7 +129,7 @@ const createGame = async (userId) => {
  */
 const nextRoundGame = async (userId, gameId, roundId) => {
   const response = await fetch(
-    `${SERVER_URL}/api/v1/users/${userId}/games/${gameId}/round/${roundId}/begin`,
+    `${config.SERVER_URL}/api/v1/users/${userId}/games/${gameId}/round/${roundId}/begin`,
     {
       method: "POST",
       credentials: "include",
@@ -157,7 +156,7 @@ const nextRoundGame = async (userId, gameId, roundId) => {
  */
 const checkAnswerGame = async (userId, gameId, roundId, cardIds) => {
   const response = await fetch(
-    `${SERVER_URL}/api/v1/users/${userId}/games/${gameId}/round/${roundId}/verify`,
+    `${config.SERVER_URL}/api/v1/users/${userId}/games/${gameId}/round/${roundId}/verify`,
     {
       method: "POST",
       headers: {
@@ -184,7 +183,7 @@ const checkAnswerGame = async (userId, gameId, roundId, cardIds) => {
  * @throws {ErrorDTO} Throws structured error from server
  */
 const logIn = async (credentials) => {
-  const response = await fetch(`${SERVER_URL}/api/v1/sessions`, {
+  const response = await fetch(`${config.SERVER_URL}/api/v1/sessions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -210,7 +209,7 @@ const logIn = async (credentials) => {
  * @throws {ErrorDTO} Throws structured error from server
  */
 const getUserInfo = async () => {
-  const response = await fetch(`${SERVER_URL}/api/v1/sessions/current`, {
+  const response = await fetch(`${config.SERVER_URL}/api/v1/sessions/current`, {
     credentials: "include",
   });
 
@@ -232,7 +231,7 @@ const getUserInfo = async () => {
  * @throws {ErrorDTO} Throws structured error from server
  */
 const logOut = async () => {
-  const response = await fetch(`${SERVER_URL}/api/v1/sessions/current`, {
+  const response = await fetch(`${config.SERVER_URL}/api/v1/sessions/current`, {
     method: "DELETE",
     credentials: "include",
   });

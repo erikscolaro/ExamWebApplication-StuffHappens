@@ -4,9 +4,9 @@
 ### LOGICA AGGIORNATA: 3 carte di base + 3 vite ###
 ### Il gioco finisce quando: vite = 0 (3 errori) O 6 carte totali indovinate (3 base + 3 round) ###
 
-@baseUrl = http://localhost:3001
-@username = pirataarrabbiato99
-@userid = 1
+@baseUrl = https://stuffhappens-api.onrender.com
+@username = progamer
+@userid = 2
 
 
 ### ============================================
