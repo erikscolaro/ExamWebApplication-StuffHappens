@@ -1,14 +1,10 @@
 // filepath: gameServices.mjs
-import ErrorDTO from '../models/errors.mjs';
-import * as dao from '../dao/dao.mjs';
-import CONFIG from '../config/config.mjs';
-import { Game } from '../models/game.mjs';
-import crypto from 'crypto';
-import dayjs from 'dayjs';
-
-// =================== GAME SERVICES ===================
-
-// --- Game Creation Utilities ---
+import ErrorDTO from "../models/errors.mjs";
+import * as dao from "../dao/dao.mjs";
+import CONFIG from "../config/config.mjs";
+import { Game } from "../models/game.mjs";
+import crypto from "crypto";
+import dayjs from "dayjs";
 
 /**
  * Generates unique random card IDs
@@ -26,67 +22,75 @@ function generateUniqueCardIds(count, totalCards) {
 }
 
 /**
- * Creates a new game with complete initial setup
- * @param {number} userId - The user ID
+ * Creates a new game with initial setup and 3 base cards
+ * @param {number} userId - The user ID (null for demo games)
  * @param {string} createdAt - Creation timestamp
  * @param {boolean} isDemo - Whether this is a demo game (default: false)
- * @returns {Promise<Game>} Complete game object with initial state
+ * @returns {Promise<Game>} The game object with records
+ * @throws {ErrorDTO} If game creation fails
  */
-export async function createNewGameWithSetup(userId, createdAt, isDemo = false) {
-  // 1. Create game with initial state round 0 and not ended
+export async function createNewGameWithSetup(
+  userId,
+  createdAt,
+  isDemo = false
+) {
   const gameId = await dao.createGame(userId, createdAt, isDemo);
-  
-  // 2. Generate random cards and create records
-  const cardIds = generateUniqueCardIds(isDemo?4:6, CONFIG.CARDS_NUMBER);
-    
-  // 3. Create game records
+
+  const allCards = await dao.getCards();
+  const cardIds = generateUniqueCardIds(3, allCards.length);
+
+  // Create 3 base cards (round 0, always "guessed")
   await Promise.all(
-    cardIds.map((cardId, index) => {
-      const roundNumber = index < 3 ? 0 : index - 2;
-      const wasGuessed = roundNumber === 0 ? true : null;
-      const timedOut = roundNumber === 0 ? false : null;
-      return dao.createGameRecord(gameId, cardId, roundNumber, wasGuessed, timedOut);
+    cardIds.map((cardIndex) => {
+      return dao.createGameRecord(
+        gameId,
+        allCards[cardIndex].id,
+        0,
+        true,
+        createdAt,
+        createdAt
+      );
     })
   );
 
-  // 4. Get complete game state
   const game = await dao.getGameWithRecordsAndCards(gameId);
   if (!game) {
-    throw ErrorDTO.notFound(`Game with ID ${gameId} not found after creation`);
+    throw ErrorDTO.internalServerError(
+      `Failed to create game with ID ${gameId}`
+    );
   }
-
   return game;
 }
-
-// --- Route Response Helpers ---
-
-/**
- * Gets user's game history
- * @param {number|string} userId - The user ID
- * @returns {Promise<Array<Game>>} Array of user's games with records
- */
-export async function getUserGameHistory(userId) {
-  return await dao.getGamesWithRecordsAndCards(parseInt(userId));
-}
-
-// --- Game Logic & Evaluation ---
 
 /**
  * Checks if game should end and updates game state accordingly
  * @param {Game} game - The game object
  * @returns {Promise<Game>} Updated game object
  */
-export async function checkAndUpdateGameState(game) {
-  const isLastRound = (game.isDemo && game.roundNum >= CONFIG.DEMO_ROUNDS) ||
-                     (!game.isDemo && game.roundNum >= CONFIG.FULL_ROUNDS);
-  
-  if (isLastRound) {
-    game.isEnded = true;
-  } else {
-    game.roundNum += 1;
+export async function checkAndUpdateGameEnding(game) {
+  if (game.isEnded) {
+    return game;
   }
-  
-  await dao.updateGame(game.id, game.roundNum, true);
+  let shouldEnd = false;
+
+  if (game.isDemo) {
+    shouldEnd = game.roundNum >= 1;
+  } else {
+    const correctGuesses = game.records.filter(
+      (record) => record.wasGuessed === true
+    ).length;
+    shouldEnd = game.livesRemaining <= 0 || correctGuesses >= 6;
+  }
+  if (shouldEnd) {
+    game.isEnded = true;
+  }
+
+  await dao.updateGame(
+    game.id,
+    game.roundNum,
+    game.isEnded,
+    game.livesRemaining
+  );
   return game;
 }
 
@@ -94,204 +98,234 @@ export async function checkAndUpdateGameState(game) {
  * Evaluates user answer by comparing with correct card order by misery index
  * @param {Game} game - The game object with records
  * @param {Array<number>} userAnswer - Array of card IDs in user's chosen order
- * @returns {boolean} Evaluation result with isCorrect flag and correct order
+ * @returns {Object} Evaluation result with isCorrect flag
  */
-export function evaluateUserAnswer(game, userAnswer) { 
+export function evaluateUserAnswer(game, userAnswer) {
   const validRecords = game.records.filter(
     (record) =>
-      (record.timedOut === false && record.round <= game.roundNum)
+      record.card &&
+      ((record.round < game.roundNum && record.wasGuessed === true) ||
+        record.round === game.roundNum)
   );
-  
-  // Map records to cards, sort by misery index ascending, then map to card IDs
-  const correctOrderedIds = validRecords
-    .map(record => record.card)
-    .sort((a, b) => a.miseryIndex - b.miseryIndex)
-    .map(card => card.id);
 
-  // Compare arrays
+  const correctOrderedIds = validRecords
+    .map((record) => record.card)
+    .sort((a, b) => a.miseryIndex - b.miseryIndex)
+    .map((card) => card.id);
+
   const isCorrect =
     correctOrderedIds.length === userAnswer.length &&
     correctOrderedIds.every((id, index) => id === userAnswer[index]);
-  if (isCorrect) {
-    // User answer is correct
-    return {
-      isCorrect: true,
-      correctOrder: correctOrderedIds,
-    };
-  } else {
-    // User answer is incorrect
-    return {
-      isCorrect: false,
-      correctOrder: correctOrderedIds
-    };
-  }
+
+  return {
+    isCorrect,
+  };
 }
 
-// --- Route Handler Helpers ---
-
 /**
- * Common logic for drawing the next card in a game
+ * Validates game existence, type, and user authorization
  * @param {number} gameId - The game ID
- * @param {boolean} isDemo - Whether this is a demo game (for validation)
+ * @param {boolean|null} isDemo - Whether this is a demo game (null to skip validation)
  * @param {number|null} userId - The user ID (null for demo games)
- * @returns {Promise<Object>} Response object with game and nextCard
+ * @returns {Promise<Game>} Validated game object with records and cards
+ * @throws {ErrorDTO} If validation fails
  */
-export async function handleDrawCard(gameId, isDemo = null, userId = null) {
-  // 1. Get game with complete records and cards
+async function validateGameAccess(gameId, isDemo = null, userId = null) {
   const game = await dao.getGameWithRecordsAndCards(gameId);
-  if (!game || !game.records || game.records.length === 0) {
+  if (!game) {
     throw ErrorDTO.notFound(`Game with ID ${gameId} not found`);
   }
 
-  // 2. validate game type if specified
+  if (!game.records) {
+    game.records = [];
+  }
+
   if (isDemo !== null && game.isDemo !== isDemo) {
     const gameType = isDemo ? "demo game" : "regular game";
     throw ErrorDTO.badRequest(`Game with ID ${gameId} is not a ${gameType}`);
   }
 
-  // 3. SECURITY CHECK: Verify user authorization
   if (isDemo === false) {
-    // For regular games, verify user owns the game
     if (!userId || game.userid !== userId) {
-      throw ErrorDTO.forbidden(`Access denied: Game ${gameId} does not belong to user ${userId}`);
-    }
-  } else if (isDemo === true) {
-    // For demo games, verify it's actually a demo (userId should be null)
-    if (game.userid !== null) {
-      throw ErrorDTO.forbidden(`Access denied: Game ${gameId} is not a demo game`);
+      throw ErrorDTO.forbidden(
+        `Access denied: Game ${gameId} does not belong to user ${userId}`
+      );
     }
   }
-  // 4. set game end state if needed and return if ended
-  const updatedGame = await checkAndUpdateGameState(game);
-  if (updatedGame.isEnded) {
-    return {
-      game: updatedGame.toJSON(),
-      nextCard: null // No next card if game is ended
-    };
+  return game;
+}
+
+/**
+ * Handles drawing the next card in a game round
+ * @param {number} gameId - The game ID
+ * @param {number} roundId - The round ID
+ * @param {boolean|null} isDemo - Whether this is a demo game (null to skip validation)
+ * @param {number|null} userId - The user ID (null for demo games)
+ * @returns {Promise<Object>} Response object with game (without records) and nextCard
+ * @throws {ErrorDTO} If game is not found, ended, or in wrong round
+ */
+export async function handleDrawCard(
+  gameId,
+  roundId,
+  isDemo = null,
+  userId = null
+) {
+  const game = await validateGameAccess(gameId, isDemo, userId);
+  if (game.isEnded) {
+    throw ErrorDTO.badRequest(`Game with ID ${gameId} has already ended`);
   }
 
-  // 6. Extract the card for the current round (nextCard)
-  const nextCardRecord = game.records.find(record => record.round === game.roundNum);
-  if (!nextCardRecord || !nextCardRecord.card) {
-    throw ErrorDTO.notFound(
-      `No card found for game ${gameId} in round ${game.roundNum}`
+  const currentRound = parseInt(game.roundNum);
+  const requestedRound = parseInt(roundId);
+
+  if (requestedRound !== currentRound + 1) {
+    throw ErrorDTO.badRequest(
+      `Game with ID ${gameId} is in round ${currentRound}, cannot draw card for round ${requestedRound}`
     );
   }
-  const nextCard = nextCardRecord.card;
 
-  // 7. Update next card record with drawn datetime
-  await dao.updateGameRecord(
-    nextCardRecord.id,
-    null,
+  game.roundNum = requestedRound;
+  await dao.updateGame(
+    gameId,
+    game.roundNum,
+    game.isEnded,
+    game.livesRemaining
+  );
+
+  const allCards = await dao.getCards();
+  const usedCardIds = game.records.map((record) => record.card.id);
+
+  const availableCards = allCards.filter(
+    (card) => !usedCardIds.includes(card.id)
+  );
+
+  if (availableCards.length === 0) {
+    throw ErrorDTO.internalServerError(
+      `No more cards available for game ${gameId}`
+    );
+  }
+
+  const randomIndex = crypto.randomInt(0, availableCards.length);
+  const selectedCard = availableCards[randomIndex];
+
+  const recordId = await dao.createGameRecord(
+    gameId,
+    selectedCard.id,
+    requestedRound,
     null,
     dayjs().toISOString(),
     null
   );
 
-  // 8. Filter records in game: round < game.roundNum && timedOut = false
-  game.records = game.records.filter(
-    record => record.round < game.roundNum && record.timedOut === false
+  const nextCardRecord = {
+    id: recordId,
+    card: selectedCard,
+    round: requestedRound,
+    wasGuessed: null,
+    requestedAt: dayjs().toISOString(),
+    respondedAt: null,
+  };
+  const gameForResponse = new Game(
+    game.id,
+    game.userid,
+    game.createdat,
+    game.roundNum,
+    game.isEnded,
+    game.isDemo,
+    game.livesRemaining,
+    []
   );
 
-  // 9. Prepare response with game state and next card
   return {
-    game: game.toJSON(),
-    nextCard: nextCard.toJSONWithoutMiseryIndex()
+    game: gameForResponse.toJSON(),
+    nextCard: nextCardRecord.card.toJSONWithoutMiseryIndex(),
   };
 }
 
 /**
- * Common logic for checking user answers in a game
+ * Handles checking user answers in a game round
  * @param {number} gameId - The game ID
  * @param {Array<number>} cardsIds - Array of card IDs in user's order
- * @param {boolean} isDemo - Whether this is a demo game (for validation)
+ * @param {number} roundId - The round ID
+ * @param {boolean|null} isDemo - Whether this is a demo game (null to skip validation)
  * @param {number|null} userId - The user ID (null for demo games)
- * @returns {Promise<Object>} Response object with evaluation result
+ * @returns {Promise<Object>} Response object with game record and game status
+ * @throws {ErrorDTO} If game is not found, ended, or in wrong round
  */
-export async function handleCheckAnswer(gameId, cardsIds, isDemo = null, userId = null) {
-  // saved before all to minimize lag issues with async
+export async function handleCheckAnswer(
+  gameId,
+  cardsIds,
+  roundId,
+  isDemo = null,
+  userId = null
+) {
   const respondedAt = dayjs();
 
-  // 1. check if game exists
-  const game = await dao.getGameWithRecordsAndCards(gameId);
-  if (!game || !game.records || game.records.length === 0) {
-    throw ErrorDTO.notFound(`Game with ID ${gameId} not found`);
-  }
-  
-  // 2. validate game type and user authorization
-  if (isDemo !== null && game.isDemo !== isDemo) {
-    const gameType = isDemo ? "demo game" : "regular game";
-    throw ErrorDTO.badRequest(`Game with ID ${gameId} is not a ${gameType}`);
-  }
+  let game = await validateGameAccess(gameId, isDemo, userId);
 
-  // 3. SECURITY CHECK: Verify user authorization
-  if (isDemo === false) {
-    // For regular games, verify user owns the game
-    if (!userId || game.userid !== userId) {
-      throw ErrorDTO.forbidden(`Access denied: Game ${gameId} does not belong to user ${userId}`);
-    }
-  } else if (isDemo === true) {
-    // For demo games, verify it's actually a demo (userId should be null)
-    if (game.userid !== null) {
-      throw ErrorDTO.forbidden(`Access denied: Game ${gameId} is not a demo game`);
-    }
+  if (game.roundNum != roundId) {
+    throw ErrorDTO.badRequest(`Game ${gameId} is not in round ${roundId}`);
   }
-
-  // 2. manage game end state
   if (game.isEnded) {
     const gameType = game.isDemo ? "Demo game" : "Game";
-    throw ErrorDTO.badRequest(`${gameType} has already ended`);
-  } 
+    throw ErrorDTO.badRequest(`${gameType} ${gameId} has already ended`);
+  }
 
-  // 3. Check if the user answered in time
-  let response = null;
   const currentRecord = game.records.find(
     (record) => record.round === game.roundNum
   );
 
   if (!currentRecord) {
-    throw ErrorDTO.notFound(
+    throw ErrorDTO.internalServerError(
       `No record found for game ${gameId} in round ${game.roundNum}`
     );
   }
-
-  currentRecord.respondedAt = respondedAt.toISOString();      
-  if (
-    dayjs(currentRecord.respondedAt).diff(
-      dayjs(currentRecord.requestedAt)
-    ) > CONFIG.MAX_RESPONSE_TIME
-  ) {
-    // 3.1 User did not answer in time
-    currentRecord.wasGuessed = false;
-    currentRecord.timedOut = true;
-    response = {
-      isCorrect: false,
-    };
-  } else {
-    // User has answered in time
-    currentRecord.timedOut = false;
-    // 3.2 Check if the user answer (as cards IDs) matches the true card IDs ordered by misery index
-    const evaluationResult = evaluateUserAnswer(game, cardsIds);
-    if (evaluationResult.isCorrect) {
-      // 3.3 User answer is correct
-      currentRecord.wasGuessed = true;
-    } else {
-      // 3.4 User answer is incorrect
-      currentRecord.wasGuessed = false;
-    }
-    response = evaluationResult;
+  if (currentRecord.respondedAt === null) {
+    currentRecord.respondedAt = respondedAt.toISOString();
   }
-  
-  // 4. Update game record
+
+  let isCorrect = false;
+  if (!cardsIds || cardsIds.length === 0) {
+    isCorrect = false;
+    currentRecord.wasGuessed = false;
+  } else {
+    const evaluation = evaluateUserAnswer(game, cardsIds);
+    isCorrect = evaluation.isCorrect;
+    currentRecord.wasGuessed = isCorrect;
+  }
+
+  if (!isCorrect) {
+    game.livesRemaining -= 1;
+  }
+
   await dao.updateGameRecord(
     currentRecord.id,
     currentRecord.wasGuessed,
-    currentRecord.timedOut,
     currentRecord.requestedAt,
     currentRecord.respondedAt
   );
 
-  // 5. return response
+  game = await checkAndUpdateGameEnding(game);
+
+  const gameRecord = {
+    card: isCorrect ? currentRecord.card.toJSON() : null,
+    round: currentRecord.round,
+    wasGuessed: currentRecord.wasGuessed,
+  };
+
+  const response = {
+    gameRecord: gameRecord,
+    isEnded: game.isEnded,
+    livesRemaining: game.livesRemaining,
+  };
+
+  if (game.isDemo && game.isEnded) {
+    try {
+      await dao.deleteDemoGame(gameId);
+    } catch (error) {
+      console.error(`Failed to delete demo game ${gameId}:`, error);
+    }
+  }
+
   return response;
 }
-
