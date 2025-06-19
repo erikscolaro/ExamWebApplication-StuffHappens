@@ -60,7 +60,7 @@ export const colors = {
     dark: GRAY_900,
   },
   logic: {
-    success: "rgba(40, 167, 69, 1)" ,
+    success: "rgba(40, 167, 69, 1)",
     error: "rgba(220, 53, 69, 1)",
   },
 };

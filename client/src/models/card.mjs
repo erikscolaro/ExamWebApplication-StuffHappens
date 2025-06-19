@@ -1,5 +1,5 @@
 export class Card {
-  constructor(id, name, imageFilename, miseryIndex){
+  constructor(id, name, imageFilename, miseryIndex) {
     this.id = id;
     this.name = name;
     this.imageFilename = imageFilename;
@@ -24,11 +24,6 @@ export class Card {
   }
 
   static fromJSON(json) {
-    return new Card(
-      json.id,
-      json.name,
-      json.imageFilename,
-      json.miseryIndex
-    );
+    return new Card(json.id, json.name, json.imageFilename, json.miseryIndex);
   }
 }

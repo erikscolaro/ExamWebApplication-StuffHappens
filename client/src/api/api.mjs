@@ -10,20 +10,19 @@ const handleApiError = async (response) => {
     return await response.json();
   }
 
-  return response
-    .json()
-    .then((errorData) => {
-      if (errorData.code && errorData.error && errorData.description) {
-        throw ErrorDTO.fromJSON(errorData);
-      } else {
-        throw new Error(errorData.message || "Internal server error");
-      }
-    })
-    .catch(() => {
-      throw new Error(
-        `Server error: ${response.status} ${response.statusText}`
-      );
-    });
+  let errorData = null;
+  try {
+    errorData = await response.json();
+  } catch (e) {
+    // If the response is not JSON, we assume it's a server error
+    throw new Error("Internal server error");
+  }
+
+  if (errorData.code && errorData.error && errorData.description) {
+    throw ErrorDTO.fromJSON(errorData);
+  } else {
+    throw new Error(JSON.stringify(errorData) || "Internal server error");
+  }
 };
 
 const createDemoGame = async () => {
@@ -215,15 +214,8 @@ const getUserInfo = async () => {
     credentials: "include",
   });
 
-  // 401 is expected when no session exists, don't treat as error
-  if (response.status === 401) {
-    return {
-      authenticated: false,
-      user: null,
-    };
-  }
-
   const data = await handleApiError(response);
+
   return {
     authenticated: data.authenticated,
     user: User.fromJSON(data.user),

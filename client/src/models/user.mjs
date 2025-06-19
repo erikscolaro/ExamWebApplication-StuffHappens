@@ -1,6 +1,5 @@
-
 class User {
-  constructor(id, username, hashPassword, salt){
+  constructor(id, username, hashPassword, salt) {
     this.id = id;
     this.username = username;
     this.hashPassword = hashPassword;
@@ -10,10 +9,10 @@ class User {
   toJSON() {
     return {
       id: this.id,
-      username: this.username
+      username: this.username,
     };
   }
-  
+
   static fromJSON(json) {
     return new User(json.id, json.username, json.hashPassword, json.salt);
   }

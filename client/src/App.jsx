@@ -24,11 +24,9 @@ function App() {
       try {
         setIsLoading(true);
         const userInfo = await API.getUserInfo();
-        if (!userInfo.authenticated) {
-          setUser(null);
-        }
-      } catch {
-        setUser(null);
+        setUser(userInfo.user);
+      } catch (e) {
+        console.error("Failed to retrieve user session." + e);
       } finally {
         setIsLoading(false);
       }
@@ -45,8 +43,7 @@ function App() {
         msg: `Welcome, ${userResponse.user.username}!`,
         type: "success",
       });
-    } catch (err) {
-      console.error("Login failed:", err);
+    } catch {
       setMessage({
         msg: "User or password is incorrect. Try again.",
         type: "warning",
@@ -71,11 +68,7 @@ function App() {
         value={{ user, isLoading, handleLogin, handleLogout }}
       >
         <Routes>
-          <Route
-            element={
-              <DefaultLayout/>
-            }
-          >
+          <Route element={<DefaultLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route
               path="/login"

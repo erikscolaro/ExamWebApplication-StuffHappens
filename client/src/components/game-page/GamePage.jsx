@@ -292,10 +292,13 @@ export default function GamePage() {
         }
         isBlocking={true}
         onHide={() => setShowModal(false)}
-      />
+      />{" "}
       <Container
         fluid
-        className="d-flex p-3 flex-column align-items-center gap-5"
+        className="d-flex p-3 flex-column align-items-center justify-content-center gap-5"
+        style={{
+          minHeight: "100%",
+        }}
       >
         <Row className="justify-content-between align-items-center w-100">
           <Col>
