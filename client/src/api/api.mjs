@@ -3,7 +3,7 @@ import { Card } from "../models/card.mjs";
 import User from "../models/user.mjs";
 import ErrorDTO from "../models/errors.mjs";
 
-const SERVER_URL = "http://localhost:3001";
+const SERVER_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
 const handleApiError = async (response) => {
   if (response.ok) {

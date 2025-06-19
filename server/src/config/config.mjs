@@ -7,8 +7,8 @@ const APP_V1_BASE_URL = "/api/v1";
 
 const CONFIG = {
   DB_NAME: path.join(__dirname, "../../data/database.db"),
-  APP_PORT: 3001,
-  APP_HOST: "localhost",
+  APP_PORT: process.env.PORT || 3001,
+  APP_HOST: process.env.HOST || 'localhost',
   ROUTES_V1: {
     AUTH: APP_V1_BASE_URL + "/sessions",
     DEMO: APP_V1_BASE_URL + "/demos",
@@ -16,7 +16,7 @@ const CONFIG = {
     IMAGES_PATH: "/public/images",
     IMAGES_URL: "/images",
   },
-  CORS_OPTIONS: {    origin: ["http://localhost:5173"],
+  CORS_OPTIONS: {    origin: ["http://localhost:5173", "https://stuffhappens.onrender.com"],
     optionsSuccessStatus: 200,
     credentials: true,
   },
