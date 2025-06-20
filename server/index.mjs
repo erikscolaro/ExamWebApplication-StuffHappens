@@ -20,6 +20,18 @@ const port = CONFIG.APP_PORT;
 app.use(express.json());
 app.use(morgan(CONFIG.MORGAN_LOG_LEVEL));
 app.use(cors(CONFIG.CORS_OPTIONS));
+
+// Debug middleware per cookie
+app.use((req, res, next) => {
+  console.log('🍪 Cookie debug:', {
+    origin: req.headers.origin,
+    cookies: req.headers.cookie,
+    sessionID: req.sessionID,
+    user: req.user?.username
+  });
+  next();
+});
+
 app.use(session(CONFIG.SESSION_OPTIONS));
 
 app.use(passport.initialize());
