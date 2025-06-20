@@ -30,9 +30,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(passport.authenticate('session'));
 
-// Serve static images
-app.use('/images', express.static('./src/public/images'));
-
 //ROUTES
 // API root endpoint
 app.get('/api/v1/', (req, res) => {

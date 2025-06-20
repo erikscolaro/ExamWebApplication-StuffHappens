@@ -31,7 +31,7 @@ POST {{baseUrl}}/api/v1/users/{{userid}}/games/new
 Content-Type: application/json
 
 ###
-@gameid = 1
+@gameid = 21
 
 ### 4. OTTIENI STORIA PARTITE (opzionale - per vedere lo stato)
 GET {{baseUrl}}/api/v1/users/{{userid}}/games

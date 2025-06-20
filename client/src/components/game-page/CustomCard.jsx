@@ -60,10 +60,9 @@ function CustomCard({ card, placeholder = false, children }) {
       ) : (
         <>
           <Card.Img
-            variant="top"
-            src={
+            variant="top"            src={
               imageError || !card.imageFilename
-                ? `${config.SERVER_URL}/images/default.png`
+                ? `${config.SERVER_URL}/images/default.jpg`
                 : `${config.SERVER_URL}/images/${card.imageFilename}`
             }
             onError={handleImageError}
