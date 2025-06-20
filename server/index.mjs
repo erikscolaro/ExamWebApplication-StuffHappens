@@ -20,17 +20,7 @@ const port = CONFIG.APP_PORT;
 app.use(express.json());
 app.use(morgan(CONFIG.MORGAN_LOG_LEVEL));
 app.use(cors(CONFIG.CORS_OPTIONS));
-app.use(session({
-  secret: process.env.SESSION_SECRET || "shhhhh... it's a secret!",
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS solo in produzione
-    httpOnly: true, // Sicurezza: cookie non accessibile via JavaScript
-    maxAge: 24 * 60 * 60 * 1000, // 24 ore
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Cross-domain in produzione
-  }
-}));
+app.use(session(CONFIG.SESSION_OPTIONS));
 
 app.use(passport.initialize());
 app.use(passport.session());
