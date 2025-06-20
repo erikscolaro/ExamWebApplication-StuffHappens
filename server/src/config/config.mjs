@@ -8,12 +8,11 @@ const APP_V1_BASE_URL = "/api/v1";
 const CONFIG = {
   DB_NAME: path.join(__dirname, "../../data/database.db"),
   APP_PORT: process.env.PORT || 3001,
-  APP_HOST: process.env.HOST || 'localhost',
-  ROUTES_V1: {
+  APP_HOST: process.env.HOST || 'localhost',  ROUTES_V1: {
     AUTH: APP_V1_BASE_URL + "/sessions",
     DEMO: APP_V1_BASE_URL + "/demos",
     GAME: APP_V1_BASE_URL + "/users/:userId/games",
-    IMAGES_PATH: "/public/images",
+    IMAGES_PATH: path.join(__dirname, '../public/images'),
     IMAGES_URL: "/images",
   },
   CORS_OPTIONS: {    origin: ["http://localhost:5173", process.env.FRONTEND_URL],
