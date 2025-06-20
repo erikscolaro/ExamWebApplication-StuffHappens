@@ -2,6 +2,7 @@ import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
 import passport from './src/config/passportConfig.mjs';
 import authRouter from './src/routes/authRoutes.mjs';
 import gameRouter from './src/routes/gameRoutes.mjs';
@@ -28,11 +29,27 @@ app.use((req, res, next) => {
     cookies: req.headers.cookie,
     sessionID: req.sessionID,
     user: req.user?.username
-  });
-  next();
+  });  next();
 });
 
-app.use(session(CONFIG.SESSION_OPTIONS));
+// Configurazione session store
+const sessionOptions = { ...CONFIG.SESSION_OPTIONS };
+
+if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
+  // PostgreSQL store per produzione
+  const pgSession = connectPgSimple(session);
+  sessionOptions.store = new pgSession({
+    conString: process.env.DATABASE_URL,
+    tableName: 'user_sessions',
+    createTableIfMissing: true
+  });
+  console.log('🐘 Using PostgreSQL session store');
+} else {
+  // MemoryStore per development
+  console.log('⚠️  Using MemoryStore for sessions - OK for development only');
+}
+
+app.use(session(sessionOptions));
 
 app.use(passport.initialize());
 app.use(passport.session());
